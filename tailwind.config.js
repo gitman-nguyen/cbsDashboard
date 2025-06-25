@@ -5,8 +5,23 @@ export default {
 	"./src/**/*.{js,jsx}"
 	],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+      nnavBg: "#2D544C",
+      navActive: "#3A6B63",
+      navText: "#FFD700",
+    },
+    borderRadius: {
+      DEFAULT: "0.5rem", // rounded-lg
+    },
+    fontWeight: {
+      semibold: 600,
+    },
   },
-  plugins: [],
+  },
+  plugins: [
+    require('@tailwindcss/forms')
+
+  ],
 }
 
