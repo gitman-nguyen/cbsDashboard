@@ -299,10 +299,22 @@ const App = () => {
     const historicalDataCustomers = [ { month: 'T1', '2019': 9656487, '2020': 10786031, '2021': 12030916, '2022': 13848173, '2023': 15952993, '2024': 19355122, '2025': 22044666 }, { month: 'T2', '2019': 9721375, '2020': 10896651, '2021': 12091951, '2022': 13951141, '2023': 16122033, '2024': 19497444, '2025': 22208411 }, { month: 'T3', '2019': 9867924, '2020': 11021568, '2021': 12245414, '2022': 13836463, '2023': 16394484, '2024': 19716610, '2025': 22400157 }, { month: 'T4', '2019': 9995512, '2020': 11102005, '2021': 12428870, '2022': 14031236, '2023': 16699062, '2024': 19936667, '2025': 22571454 }, { month: 'T5', '2019': 10122903, '2020': 11215459, '2021': 12594700, '2022': 14230788, '2023': 17005047, '2024': 20247475, '2025': 22759026 }, { month: 'T6', '2019': 10230944, '2020': 11348598, '2021': 12732373, '2022': 14411889, '2023': 17396120, '2024': 20477446, '2025': null }, { month: 'T7', '2019': 10360057, '2020': 11487241, '2021': 12836365, '2022': 14564994, '2023': 17767003, '2024': 20717127, '2025': null }, { month: 'T8', '2019': 10499226, '2020': 11603118, '2021': 12927206, '2022': 14765195, '2023': 18126071, '2024': 21005215, '2025': null }, { month: 'T9', '2019': 10338024, '2020': 11480809, '2021': 13048090, '2022': 15035510, '2023': 18405803, '2024': 21298283, '2025': null }, { month: 'T10', '2019': 10492757, '2020': 11642540, '2021': 13273258, '2022': 15319916, '2023': 18734816, '2024': 21536440, '2025': null }, { month: 'T11', '2019': 10606801, '2020': 11802198, '2021': 13538154, '2022': 15628798, '2023': 18979659, '2024': 21760624, '2025': null }, { month: 'T12', '2019': 10721178, '2020': 11935334, '2021': 13751551, '2022': 15847618, '2023': 19174616, '2024': 21915101, '2025': null } ];
     const avgDailyTransactionOverviewData = [ { name: 'T10/24', NgayThuong: 11916844, CuoiTuan: 10230944, ChungCaThang: 11579583 }, { name: 'T11/24', NgayThuong: 12200000, CuoiTuan: 10700000, ChungCaThang: 11700000 }, { name: 'T12/24', NgayThuong: 12600000, CuoiTuan: 10600000, ChungCaThang: 11800000 }, { name: 'T1/25', NgayThuong: 14381208, CuoiTuan: 10017960, ChungCaThang: 12410709 }, { name: 'T2/25', NgayThuong: 10688239, CuoiTuan: 8164601, ChungCaThang: 9967199 }, { name: 'T3/25', NgayThuong: 12585981, CuoiTuan: 10575212, ChungCaThang: 11937346 }, { name: 'T4/25', NgayThuong: 13200000, CuoiTuan: 11400000, ChungCaThang: 12800000 }, { name: 'T5/25', NgayThuong: 13465361, CuoiTuan: 11916844, ChungCaThang: 12981449 }, ];
 
+    const getLatestMonth = (reports) => {
+        const monthKeys = Object.keys(reports);
+        if (monthKeys.length === 0) return '';
+        monthKeys.sort((a, b) => {
+            const [monthA, yearA] = a.split('/').map(Number);
+            const [monthB, yearB] = b.split('/').map(Number);
+            if (yearA !== yearB) return yearB - yearA;
+            return monthB - monthA;
+        });
+        return monthKeys[0];
+    };
+
     const [filterOpen, setFilterOpen] = useState(false);
     const [selectedYears, setSelectedYears] = useState(historicalDataYears);
     const [reports, setReports] = useState(initialReportData);
-    const [currentMonth, setCurrentMonth] = useState('01/2025');
+    const [currentMonth, setCurrentMonth] = useState(() => getLatestMonth(initialReportData));
     const [isExporting, setIsExporting] = useState(false);
     const [maximizedChart, setMaximizedChart] = useState(null);
 
@@ -564,7 +576,14 @@ const App = () => {
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4"><BidvLogo className="h-10" /><h1 className="text-2xl sm:text-3xl font-extrabold hidden md:block" style={{ background: 'linear-gradient(to right, #C0B283, #FFD700, #DAA520, #B8860B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }}>Core Banking Operations Report</h1></div>
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)} className="bg-transparent border border-white/20 rounded-lg py-2 px-3 text-sm text-white hover:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]">{Object.keys(reports).sort((a, b) => b.localeCompare(a)).map(month => ( <option key={month} value={month} className="bg-[#2D544C]">{`Tháng ${month}`}</option>))}</select>
+                        <select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)} className="bg-transparent border border-white/20 rounded-lg py-2 px-3 text-sm text-white hover:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]">
+                            {Object.keys(reports).sort((a, b) => {
+                                const [monthA, yearA] = a.split('/').map(Number);
+                                const [monthB, yearB] = b.split('/').map(Number);
+                                if (yearA !== yearB) return yearB - yearA;
+                                return monthB - monthA;
+                            }).map(month => ( <option key={month} value={month} className="bg-[#2D544C]">{`Tháng ${month}`}</option>))}
+                        </select>
                         <div className="relative"><button onClick={() => setFilterOpen(!filterOpen)} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"><Filter size={20} /></button>{filterOpen && (<div className="absolute top-full right-0 mt-2 w-64 bg-[#3A6B63] border border-white/10 rounded-lg shadow-2xl p-4 z-20"><h3 className="text-md font-semibold mb-3">Lọc dữ liệu theo năm</h3><div className="grid grid-cols-2 gap-2">{historicalDataYears.map(year => (<label key={year} className="inline-flex items-center text-sm cursor-pointer"><input type="checkbox" value={year} checked={selectedYears.includes(year)} onChange={() => handleYearChange(year)} className="form-checkbox h-4 w-4 text-[#DAA520] bg-gray-600 border-gray-500 rounded focus:ring-[#DAA520]" /><span className="ml-2 text-gray-200">{year}</span></label>))}</div></div>)}</div>
                         <label htmlFor="import-file" className={`p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors ${cooldown > 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                             {cooldown > 0 ? (<span className="flex items-center text-xs w-12 justify-center"><Loader className="animate-spin h-4 w-4 mr-1" />{`${cooldown}s`}</span>) : (<Upload size={20} />)}
