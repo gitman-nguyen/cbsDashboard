@@ -312,11 +312,23 @@ const App = () => {
     };
 
     const [filterOpen, setFilterOpen] = useState(false);
-    const [selectedYears, setSelectedYears] = useState(historicalDataYears);
+    const [selectedYears, setSelectedYears] = useState(() => historicalDataYears.slice(-3));
     const [reports, setReports] = useState(initialReportData);
     const [currentMonth, setCurrentMonth] = useState(() => getLatestMonth(initialReportData));
     const [isExporting, setIsExporting] = useState(false);
     const [maximizedChart, setMaximizedChart] = useState(null);
+
+    const handleYearChange = (yearToToggle) => {
+        setSelectedYears(prevSelectedYears => {
+            if (prevSelectedYears.includes(yearToToggle)) {
+                // Prevent unselecting the last year
+                if (prevSelectedYears.length === 1) return prevSelectedYears;
+                return prevSelectedYears.filter(year => year !== yearToToggle);
+            } else {
+                return [...prevSelectedYears, yearToToggle].sort();
+            }
+        });
+    };
 
     useEffect(() => {
         if (typeof window !== 'undefined' && typeof window.html2pdf === 'undefined') {
