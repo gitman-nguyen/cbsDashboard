@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { ArrowUp, ArrowDown, CheckCircle, AlertTriangle, Cpu, Clock, Activity, CalendarCheck, FileText, Settings, Database, Server, Minimize2, Maximize2, ChevronRight, BrainCircuit, Loader, TrendingUp, Users, Filter, Download, Upload, BarChart2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, CheckCircle, AlertTriangle, Cpu, Clock, Activity, CalendarCheck, FileText, Settings, Database, Server, Minimize2, Maximize2, ChevronRight, BrainCircuit, Loader, TrendingUp, Users, Filter, Download, Upload, BarChart2, LogIn, User, Lock } from 'lucide-react';
 
 // --- STYLING & ANIMATION COMPONENTS ---
 
@@ -37,7 +37,7 @@ const AnimatedComponent = ({ children, className = '' }) => {
 };
 
 const CardBackgroundPattern = () => (
-    <div className="absolute inset-0 w-full h-full opacity-5 group-hover:opacity-15 transition-opacity duration-500">
+    <div className="card-pattern absolute inset-0 w-full h-full opacity-5 group-hover:opacity-15 transition-opacity duration-500">
         <svg width="100%" height="100%">
             <defs>
                 <pattern id="pattern-circles" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
@@ -65,7 +65,7 @@ const KpiCard = ({ title, value, description, icon: Icon, valueColor = "text-blu
     const TrendIcon = trendNum >= 0 ? ArrowUp : ArrowDown;
 
     return (
-        <AnimatedComponent className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-2xl flex flex-col justify-between transform hover:-translate-y-2 transition-transform duration-300 overflow-hidden">
+        <AnimatedComponent className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-2xl flex flex-col justify-between transform hover:-translate-y-2 transition-transform duration-300 overflow-hidden page-break-avoider">
             <CardBackgroundPattern />
             <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
@@ -98,7 +98,7 @@ const KpiCard = ({ title, value, description, icon: Icon, valueColor = "text-blu
 
 const GrowthMetricCard = ({ icon: Icon, color, absoluteValue, percentageValue, name, description }) => {
     return (
-        <AnimatedComponent className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl text-center flex flex-col items-center justify-center transform hover:-translate-y-2 transition-transform duration-300 overflow-hidden">
+        <AnimatedComponent className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-2xl text-center flex flex-col items-center justify-center transform hover:-translate-y-2 transition-transform duration-300 overflow-hidden page-break-avoider">
              <CardBackgroundPattern />
             <div className="relative z-10">
                 <Icon className={color} size={32} />
@@ -112,72 +112,17 @@ const GrowthMetricCard = ({ icon: Icon, color, absoluteValue, percentageValue, n
 };
 
 
-const ChartCard = ({ title, children, className = "", onMaximize }) => {
+const ChartCard = ({ title, children, className = "" }) => {
   return (
-    <AnimatedComponent className={`group relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 rounded-2xl shadow-2xl ${className} overflow-hidden`}>
+    <AnimatedComponent className={`group relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 rounded-2xl shadow-2xl ${className} page-break-avoider`}>
       <CardBackgroundPattern />
       <div className="relative z-10 flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-white">{title}</h3>
-        {onMaximize && (
-          <button onClick={onMaximize} className="p-1.5 rounded-full text-gray-300 hover:bg-white/20 transition-colors">
-            <Maximize2 size={18} />
-          </button>
-        )}
       </div>
       <div className="relative z-10 h-80">{children}</div>
     </AnimatedComponent>
   );
 };
-
-const ChartModal = ({ title, children, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-      <div className="bg-[#1a2c28] border border-white/20 rounded-2xl shadow-lg w-full max-w-5xl h-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-4 border-b border-white/10">
-          <h2 className="text-xl font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-full text-gray-300 hover:bg-white/20 transition-colors">
-            <Minimize2 size={24} />
-          </button>
-        </div>
-        <div className="flex-1 p-4 overflow-auto">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ConfirmationModal = ({ content, tokenCount, onConfirm, onCancel, onDownload }) => {
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-[101] p-4">
-            <div className="bg-[#3A6B63] border border-white/20 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col">
-                <div className="flex justify-between items-center p-4 border-b border-white/10">
-                    <h2 className="text-xl font-bold text-white">Xác nhận phân tích</h2>
-                    <p className="text-sm font-semibold text-yellow-400">
-                        Tokens: {tokenCount ? tokenCount.toLocaleString() : 'Đang tính...'}
-                    </p>
-                </div>
-                <div className="p-6 max-h-[60vh] overflow-y-auto">
-                    <h3 className="font-semibold text-lg text-gray-200 mb-2">Nội dung sau sẽ được gửi đến AI để phân tích:</h3>
-                    <pre className="bg-black/20 p-4 rounded-lg whitespace-pre-wrap break-words text-sm text-gray-300">
-                        {content}
-                    </pre>
-                </div>
-                <div className="flex justify-between items-center gap-4 p-4 border-t border-white/10">
-                    <button onClick={onDownload} className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-sm">
-                        <Download size={16}/>
-                        Tải về để xem
-                    </button>
-                    <div className="flex gap-4">
-                        <button onClick={onCancel} className="py-2 px-6 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors">Hủy bỏ</button>
-                        <button onClick={onConfirm} className="py-2 px-6 bg-green-600 hover:bg-green-700 rounded-lg transition-colors font-bold">OK - Gửi đi</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 const CustomTooltip = ({ active, payload, label, unit = "", valueFormatter }) => {
   if (active && payload && payload.length) {
@@ -200,12 +145,85 @@ const BidvLogo = ({ className }) => (
     <img src="https://sanfactory.vn/wp-content/uploads/2023/10/LOGO-BIDV-tren-nen-mau-ngoai-cua-thuong-hieu-1400x447.png" alt="BIDV Logo" className={className} />
 );
 
+// --- LOGIN COMPONENT ---
+const LoginScreen = ({ onLogin, loginError }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onLogin(username, password);
+    };
+
+    return (
+        <div className="flex items-center justify-center min-h-screen">
+            <AnimatedComponent className="w-full max-w-md">
+                <form onSubmit={handleSubmit} className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-2xl shadow-2xl overflow-hidden">
+                    <CardBackgroundPattern />
+                    <div className="relative z-10">
+                        <div className="text-center mb-8">
+                            <BidvLogo className="h-12 mx-auto mb-4" />
+                            <h2 className="text-2xl font-bold text-white">Đăng nhập Hệ thống Báo cáo</h2>
+                            <p className="text-gray-400">Vui lòng nhập thông tin để tiếp tục</p>
+                        </div>
+                        
+                        {loginError && (
+                            <div className="bg-red-500/20 border border-red-500 text-red-300 text-sm rounded-lg p-3 mb-4 flex items-center">
+                                <AlertTriangle size={16} className="mr-2" />
+                                {loginError}
+                            </div>
+                        )}
+
+                        <div className="mb-4 relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Tên đăng nhập"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className="w-full bg-gray-900/50 border border-white/20 rounded-lg py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                            />
+                        </div>
+                        <div className="mb-6 relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                                type="password"
+                                placeholder="Mật khẩu"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-gray-900/50 border border-white/20 rounded-lg py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                            />
+                        </div>
+                        <button type="submit" className="w-full bg-yellow-400 text-gray-900 font-bold py-3 rounded-lg hover:bg-yellow-500 transition-colors flex items-center justify-center gap-2">
+                            <LogIn size={20} />
+                            Đăng nhập
+                        </button>
+                    </div>
+                </form>
+            </AnimatedComponent>
+        </div>
+    );
+};
+
+
 const App = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loginError, setLoginError] = useState('');
     const [isErrorDetailExpanded, setIsErrorDetailExpanded] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisMessage, setAnalysisMessage] = useState("AI đang phân tích báo cáo...");
     const [cooldown, setCooldown] = useState(0);
     const [confirmationData, setConfirmationData] = useState(null);
+
+    const handleLogin = (username, password) => {
+        // Hardcoded credentials as per user request
+        if (username === 'cbs' && password === 'Cbs@BIDV') {
+            setIsAuthenticated(true);
+            setLoginError('');
+        } else {
+            setLoginError('Tên đăng nhập hoặc mật khẩu không chính xác.');
+        }
+    };
 
     const formatMillions = (value) => {
         if (!value) return "N/A";
@@ -267,11 +285,6 @@ const App = () => {
             { name: 'Auto Payroll', value: 1, color: '#4682B4' },
             { name: 'TouchPoint Teller', value: 1, color: '#9ACD32' },
             { name: 'IMAP', value: 1, color: '#FF6347' },
-            { name: 'POS', value: 0.5, color: '#40E0D0' },
-            { name: 'CRM', value: 0.5, color: '#EE82EE' },
-            { name: 'BIDV Mobile/Internet', value: 0.4, color: '#FF4500' },
-            { name: 'Cadencle', value: 0.3, color: '#DA70D6' },
-            { name: 'Public Finance/ETAX', value: 0.2, color: '#32CD32' },
         ],
         growthMetrics: [ 
             { name: "Tổng giao dịch tài chính", percentageValue: "+35.04%", absoluteValue: "399,6M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
@@ -296,38 +309,6 @@ const App = () => {
         ],
         errorDetails: { status: "Không phát sinh lỗi gây gián đoạn giao dịch trên các kênh trong tháng 05/2025.", webCSRError: { date: "Rạng sáng ngày 25/05/2025", description: "Không truy cập được WebCSR, ảnh hưởng tới tác nghiệp của TT CSKH.", resolutionTime: "Đưa hệ thống trở lại hoạt động bình thường vào 8h08 cùng ngày", impact: "Không gây ảnh hưởng tới hoạt động của các Chi nhánh.", cause: "User ứng dụng WebCSR dùng để kết nối vào Core Profile bị hết hạn.", prevention: "Đã thiết lập thêm các job giám sát và cảnh báo để phát hiện sớm và xử lý kịp thời đối với các tài khoản sắp hết hạn." } },
         systemUpdateData: { totalAppUpdates: "42", manualParamUpdates: "209", manualParamProd: "46", systemDataUpdates: "8", profileDataUpdates: "6", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
-        nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
-      },
-      '04/2025': {
-         kpiData: { totalFinancialTransactions: { value: "385,1M", rawValue: 385146829, description: "Tổng số giao dịch tài chính", yearOverYear: "33.72%" }, peakDayTransactions: { value: "~17.2M", rawValue: 17200000, date: "10/04/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 53m", rawMinutes: 173, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.09ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "646", date: "12/04/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.98%", rawPercentage: 4.98, description: "%CPU trung bình máy chủ" }, },
-        transactionByChannelData: [ { name: 'TT Song phương (B2B)', value: 44, color: '#4A8D6E' }, { name: 'IBFT', value: 27, color: '#E58A00' }, { name: 'TTHDOL', value: 11, color: '#B36D3A' }, { name: 'SMB', value: 8, color: '#884D98' }, { name: 'ATM', value: 3, color: '#6A5ACD' }, { name: 'Điện DRO', value: 2, color: '#20B2AA' }, { name: 'Thu phí tích hợp', value: 2, color: '#D2B48C' }, { name: 'OMNI', value: 1, color: '#4682B4' }, { name: 'CRM', value: 1, color: '#9ACD32' }, { name: 'Khác', value: 1, color: '#A9A9A9' }, ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+33.72%", absoluteValue: "385,1M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.22%", absoluteValue: formatMillions(22571454), icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-4.14%", absoluteValue: formatMillions(12891307), icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+3.78%", absoluteValue: formatMillions(2948430), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+3.90%", absoluteValue: formatMillions(1183609), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, ],
-        errorDetails: { status: "Trong tháng 04/2025, hệ thống core banking không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: { date: "20h51 – 20h55 ngày Chủ nhật - 20/04/2025", description: "Hiện tượng phản hồi chậm trên các máy chủ report, gây lỗi chập chờn đối với giao dịch từ các kênh online.", resolutionTime: "Máy chủ report 1 tự khôi phục, máy chủ report 2 được build lại và hoàn thành trước 8h sáng hôm sau.", impact: "Không gây ảnh hưởng tới hoạt động chung của hệ thống do kịch bản dự phòng kịp thời.", cause: "Lỗi đọc ghi dữ liệu trên các máy chủ report.", prevention: "N/A" } },
-        systemUpdateData: { totalAppUpdates: "53", manualParamUpdates: "183", manualParamProd: "49", systemDataUpdates: "14", profileDataUpdates: "7", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
-        nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
-      },
-      '03/2025': {
-        kpiData: { totalFinancialTransactions: { value: "370,1M", rawValue: 370057722, description: "Tổng số giao dịch tài chính", yearOverYear: "31.65%" }, peakDayTransactions: { value: "~16.5M", rawValue: 16480000, date: "10/03/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "3h 02m", rawMinutes: 182, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.33ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "565", date: "14/03/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "5.1%", rawPercentage: 5.1, description: "%CPU trung bình máy chủ" }, },
-        transactionByChannelData: [ { name: 'TT Song phương (B2B)', value: 43, color: '#4A8D6E' }, { name: 'IBFT', value: 27, color: '#E58A00' }, { name: 'TTHDOL', value: 11, color: '#B36D3A' }, { name: 'SMB', value: 9, color: '#884D98' }, { name: 'Khác', value: 10, color: '#A9A9A9' }, ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+31.65%", absoluteValue: "370,1M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.61%", absoluteValue: formatMillions(22400157), icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.58%", absoluteValue: formatMillions(12890850), icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+4.41%", absoluteValue: formatMillions(2951086), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+3.92%", absoluteValue: formatMillions(1226003), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, ],
-        errorDetails: { status: "Trong tháng 03/2025, hệ thống core banking không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: { date: null, description: null, resolutionTime: null, impact: null, cause: null, prevention: null } },
-        systemUpdateData: { totalAppUpdates: "64", manualParamUpdates: "197", manualParamProd: "46", systemDataUpdates: "7", profileDataUpdates: "5", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
-        nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
-      },
-      '02/2025': {
-        kpiData: { totalFinancialTransactions: { value: "279,1M", rawValue: 279081583, description: "Tổng số giao dịch tài chính", yearOverYear: "17.8%" }, peakDayTransactions: { value: "~13.0M", rawValue: 12970000, date: "12/02/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 49m", rawMinutes: 169, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.07ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "577", date: "12/02/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.6%", rawPercentage: 4.6, description: "%CPU trung bình máy chủ" }, },
-        transactionByChannelData: [ { name: 'TT Song phương (B2B)', value: 41, color: '#4A8D6E' }, { name: 'IBFT', value: 26, color: '#E58A00' }, { name: 'TTHDOL', value: 12, color: '#B36D3A' }, { name: 'SMB', value: 9, color: '#884D98' }, { name: 'BATCH', value: 3, color: '#6A5ACD' }, { name: 'TPTD', value: 2, color: '#20B2AA' }, { name: 'ATM', value: 2, color: '#D2B48C' }, { name: 'Khác', value: 5, color: '#A9A9A9' }, ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+17.8%", absoluteValue: "279,1M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.9%", absoluteValue: formatMillions(22208411), icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.91%", absoluteValue: formatMillions(12853075), icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+5.4%", absoluteValue: formatMillions(2951486), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+4.44%", absoluteValue: formatMillions(1219540), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, ],
-        errorDetails: { status: "Trong tháng 02/2025, hệ thống không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: { date: null, description: null, resolutionTime: null, impact: null, cause: null, prevention: null } },
-        systemUpdateData: { totalAppUpdates: "45", manualParamUpdates: "166", manualParamProd: "29", systemDataUpdates: "9", profileDataUpdates: "3", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
-        nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
-      },
-      '01/2025': {
-        kpiData: { totalFinancialTransactions: { value: "384,7M", rawValue: 384731977, description: "Tổng số giao dịch tài chính", yearOverYear: "34.39%" }, peakDayTransactions: { value: "~17.5M", rawValue: 17500000, date: "23/01/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 57m", rawMinutes: 177, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "6.05ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "597", date: "21/01/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "5.52%", rawPercentage: 5.52, description: "%CPU trung bình máy chủ" }, },
-        transactionByChannelData: [ { name: 'TT Song phương (B2B)', value: 43, color: '#4A8D6E' }, { name: 'IBFT', value: 25, color: '#E58A00' }, { name: 'TTHDOL', value: 10, color: '#B36D3A' }, { name: 'SMB', value: 10, color: '#884D98' }, { name: 'Khác', value: 12, color: '#A9A9A9' }, ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+34.39%", absoluteValue: "384,7M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.9%", absoluteValue: formatMillions(22044666), icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.76%", absoluteValue: formatMillions(12856906), icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+8.25%", absoluteValue: formatMillions(2900595), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+4.03%", absoluteValue: formatMillions(1227738), icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, ],
-        errorDetails: { status: "Trong tháng 01/2025, hệ thống không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: { date: "28/01/2025", description: "DayEnd kéo dài do lượng giao dịch đột biến đêm Giao thừa (tăng 3.5 lần), khiến job STFHSTPOST chạy lâu hơn >1 giờ.", impact: "Không ảnh hưởng giao dịch khách hàng, chỉ kéo dài thời gian xử lý batch.", cause: "Tăng đột biến giao dịch night-mode.", prevention: "Đã theo dõi và đảm bảo hệ thống tự hoàn tất." } },
-        systemUpdateData: { totalAppUpdates: "45", manualParamUpdates: "179", manualParamProd: "35", systemDataUpdates: "32", profileDataUpdates: "11", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
         nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
       },
     };
@@ -572,10 +553,90 @@ const App = () => {
     const handleExportPdf = useCallback(() => {
         const element = document.getElementById('dashboard-content');
         if (element && typeof window.html2pdf !== 'undefined') {
-        setIsExporting(true);
-        const opt = { margin: [5, 5, 5, 5], filename: `bao_cao_core_banking_${currentMonth.replace('/', '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, backgroundColor: '#1a2c28', useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        window.html2pdf().from(element).set(opt).save().then(() => { setIsExporting(false); }).catch(() => { setIsExporting(false); alert("Có lỗi xảy ra khi xuất PDF."); });
-        } else { alert('Thư viện xuất PDF chưa sẵn sàng. Vui lòng thử lại sau.'); }
+            setIsExporting(true);
+            
+            const style = document.createElement('style');
+            style.id = 'pdf-export-styles';
+            style.innerHTML = `
+                .pdf-export-mode {
+                    background: #ffffff !important;
+                }
+                .pdf-export-mode * {
+                    color: #1f2937 !important; /* text-gray-800 */
+                    transition: none !important;
+                    animation: none !important;
+                    opacity: 1 !important;
+                    transform: none !important;
+                }
+                .pdf-export-mode .firefly-container, .pdf-export-mode .card-pattern {
+                    display: none !important;
+                }
+                .pdf-export-mode .bg-white\\/5, .pdf-export-mode .bg-white\\/10 {
+                    background-color: #f9fafb !important; /* bg-gray-50 */
+                    border: 1px solid #e5e7eb !important;
+                }
+                .pdf-export-mode .backdrop-blur-md { backdrop-filter: none !important; }
+                .pdf-export-mode .text-white { color: #1f2937 !important; }
+                .pdf-export-mode .text-gray-300 { color: #4b5563 !important; }
+                .pdf-export-mode .text-gray-400 { color: #6b7280 !important; }
+                .pdf-export-mode .border-white\\/10 { border-color: #e5e7eb !important; }
+                
+                .pdf-export-mode .text-green-400 { color: #16a34a !important; }
+                .pdf-export-mode .text-red-400 { color: #dc2626 !important; }
+                .pdf-export-mode .text-blue-500 { color: #2563eb !important; }
+                .pdf-export-mode .text-indigo-400 { color: #4f46e5 !important; }
+                .pdf-export-mode .text-teal-400 { color: #0d9488 !important; }
+                .pdf-export-mode .text-orange-400 { color: #ea580c !important; }
+                .pdf-export-mode .text-pink-400 { color: #db2777 !important; }
+                .pdf-export-mode .text-lime-400 { color: #65a30d !important; }
+                .pdf-export-mode .text-blue-400 { color: #3b82f6 !important; }
+                .pdf-export-mode .text-yellow-400 { color: #ca8a04 !important; }
+
+                /* Fix for "Công việc tiếp theo" section */
+                .pdf-export-mode .bg-gradient-to-r { background: #eff6ff !important; } /* light blue bg */
+                .pdf-export-mode .bg-\\[\\#1a2c28\\] { background: #dbeafe !important; } /* lighter blue bg */
+                .pdf-export-mode .bg-gradient-to-r .text-white { color: #1e3a8a !important; } /* dark blue text */
+
+                .pdf-export-mode .recharts-text, .pdf-export-mode .recharts-cartesian-axis-tick-value tspan {
+                    fill: #1f2937 !important;
+                }
+                .pdf-export-mode .page-break-avoider {
+                    page-break-inside: avoid !important;
+                }
+                .pdf-export-mode .section-title-wrapper {
+                     page-break-inside: avoid !important;
+                }
+            `;
+            document.head.appendChild(style);
+            element.classList.add('pdf-export-mode');
+
+            const opt = {
+                margin: [10, 5, 10, 5],
+                filename: `bao_cao_core_banking_${currentMonth.replace('/', '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    // Fix for rendering lucide-react icons (SVGs)
+                    svgRendering: true, 
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] }
+            };
+
+            window.html2pdf().from(element).set(opt).save().finally(() => {
+                setIsExporting(false);
+                const styleTag = document.getElementById('pdf-export-styles');
+                if (styleTag) {
+                    document.head.removeChild(styleTag);
+                }
+                element.classList.remove('pdf-export-mode');
+            });
+
+        } else {
+            alert('Thư viện xuất PDF chưa sẵn sàng. Vui lòng thử lại sau.');
+        }
     }, [currentMonth]);
 
     const calculateTrend = (currentValue, previousValue) => {
@@ -608,7 +669,7 @@ const App = () => {
             const otherValue = otherData.reduce((sum, item) => sum + item.value, 0);
             return [
                 ...topData,
-                { name: 'Khác', value: otherValue, color: '#A9A9A9' }
+                { name: 'Khác', value: otherValue, color: '#9ca3af' }
             ];
         }
         
@@ -631,15 +692,13 @@ const App = () => {
         kpiTrends.avgCPUUtilization = calculateTrend(currentReport.kpiData.avgCPUUtilization.rawPercentage, prevReport.kpiData.avgCPUUtilization.rawPercentage);
     }
 
-    const handleMaximizeChart = (chartContent, chartTitle) => { setMaximizedChart({ content: chartContent, title: chartTitle }); };
-    const handleCloseMaximizedChart = () => setMaximizedChart(null);
-    
-    const { kpiData, transactionByChannelData, growthMetrics, errorDetails, systemUpdateData, nextSteps } = currentReport;
+    const { kpiData, transactionByChannelData, growthMetrics, errorDetails, systemUpdateData, nextSteps } = currentReport || {};
     const processedTransactionByChannelData = processPieChartData(transactionByChannelData);
-    const lineColors = ['#FFD700', '#82ca9d', '#ff7300', '#8884d8', '#a4de6c', '#d0ed57', '#83a6ed' ];
-
-    return (
-        <div className="main-container min-h-screen text-white font-inter selection:bg-yellow-400 selection:text-gray-900 relative">
+    const lineColors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+    
+    // Main container styling and background
+    const MainContainer = ({ children }) => (
+         <div className="main-container min-h-screen text-white font-inter selection:bg-yellow-400 selection:text-gray-900 relative">
             <style> {`
                 .main-container {
                     background: linear-gradient(to bottom, #1a3a34, #2D544C);
@@ -745,50 +804,114 @@ const App = () => {
                 @keyframes move15 { 0% { transform: translateX(15vw) translateY(45vh) scale(0.9); } 100% { transform: translateX(-25vw) translateY(-5vh) scale(0.6); } }
             `} </style>
             <FireflyBackground />
-            <div className="relative z-10">
-                <header className="sticky top-0 z-50 bg-black/20 backdrop-blur-lg border-b border-white/10 p-4">
-                    <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-4"><BidvLogo className="h-10" /><h1 className="text-2xl sm:text-3xl font-extrabold hidden md:block" style={{ background: 'linear-gradient(to right, #C0B283, #FFD700, #DAA520, #B8860B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }}>Core Banking Operations Report</h1></div>
-                        <div className="flex items-center gap-2 sm:gap-4">
-                            <select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)} className="bg-transparent border border-white/20 rounded-lg py-2 px-3 text-sm text-white hover:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-                                {Object.keys(reports).sort((a, b) => {
-                                    const [monthA, yearA] = a.split('/').map(Number);
-                                    const [monthB, yearB] = b.split('/').map(Number);
-                                    if (yearA !== yearB) return yearB - yearA;
-                                    return monthB - monthA;
-                                }).map(month => ( <option key={month} value={month} className="bg-gray-800">{`Tháng ${month}`}</option>))}
-                            </select>
-                            <div className="relative"><button onClick={() => setFilterOpen(!filterOpen)} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"><Filter size={20} /></button>{filterOpen && (<div className="absolute top-full right-0 mt-2 w-64 bg-gray-800/90 border border-white/10 rounded-lg shadow-2xl p-4 z-20"><h3 className="text-md font-semibold mb-3">Lọc dữ liệu theo năm</h3><div className="grid grid-cols-2 gap-2">{historicalDataYears.map(year => (<label key={year} className="inline-flex items-center text-sm cursor-pointer"><input type="checkbox" value={year} checked={selectedYears.includes(year)} onChange={() => handleYearChange(year)} className="form-checkbox h-4 w-4 text-yellow-400 bg-gray-600 border-gray-500 rounded focus:ring-yellow-400" /><span className="ml-2 text-gray-200">{year}</span></label>))}</div></div>)}</div>
-                            <label htmlFor="import-file" className={`p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors ${cooldown > 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
-                                {cooldown > 0 ? (<span className="flex items-center text-xs w-12 justify-center"><Loader className="animate-spin h-4 w-4 mr-1" />{`${cooldown}s`}</span>) : (<Upload size={20} />)}
-                                <input id="import-file" type="file" accept=".txt,.pdf,.md,.doc,.docx" onChange={handleFileAnalysis} className="hidden" disabled={cooldown > 0} />
-                            </label>
-                            <button onClick={handleExportPdf} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"><Download size={20} /></button>
-                        </div>
-                    </div>
-                </header>
-                <main id="dashboard-content" className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-                    <div className="text-center mb-12"><AnimatedComponent><h2 className="text-4xl font-bold text-white">Báo cáo hoạt động Core Banking</h2><p className="text-xl text-yellow-400 mt-2">{`Tháng ${currentMonth}`}</p></AnimatedComponent></div>
-                    <section className="mb-16"><AnimatedComponent className="flex items-center gap-4 mb-8"><BarChart2 size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Hiệu suất & Độ ổn định</h3></AnimatedComponent><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><KpiCard title={kpiData.totalFinancialTransactions.description} value={kpiData.totalFinancialTransactions.value} icon={Activity} valueColor="text-green-400" trendValue={kpiTrends.totalFinancialTransactions} yearOverYearGrowth={kpiData.totalFinancialTransactions.yearOverYear} yoyLabel="so với cùng kỳ năm 2024" /><KpiCard title={kpiData.peakDayTransactions.description} value={kpiData.peakDayTransactions.value} icon={TrendingUp} valueColor="text-green-400" description={`Ngày: ${kpiData.peakDayTransactions.date}`} trendValue={kpiTrends.peakDayTransactions} /><KpiCard title={kpiData.peakTPS.description} value={kpiData.peakTPS.value} icon={Activity} valueColor="text-orange-400" description={`Ngày: ${kpiData.peakTPS.date}`} trendValue={kpiTrends.peakTPS} /><KpiCard title={kpiData.avgDayEndDuration.description} value={kpiData.avgDayEndDuration.value} icon={Clock} valueColor="text-indigo-400" trendValue={kpiTrends.avgDayEndDuration} trendDirection="down" /><KpiCard title={kpiData.avgResponseTime.description} value={kpiData.avgResponseTime.value} icon={Activity} valueColor="text-teal-400" trendValue={kpiTrends.avgResponseTime} trendDirection="down" /><KpiCard title={kpiData.avgCPUUtilization.description} value={kpiData.avgCPUUtilization.value} icon={Cpu} valueColor="text-blue-400" trendValue={kpiTrends.avgCPUUtilization} trendDirection="down" /></div></section>
-                    <section className="mb-16 grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div className="lg:col-span-2"><ChartCard title={`Tỷ trọng giao dịch theo kênh`}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={processedTransactionByChannelData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={80} outerRadius={120} fill="#8884d8" paddingAngle={2} stroke="none">{processedTransactionByChannelData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}</Pie><Tooltip content={<CustomTooltip unit="%" />} /><Legend iconType="circle" wrapperStyle={{fontSize: "12px"}}/></PieChart></ResponsiveContainer></ChartCard></div>
-                        <div className="lg:col-span-3"><ChartCard title="Số lượng giao dịch trung bình theo ngày"><ResponsiveContainer width="100%" height="100%"><AreaChart data={avgDailyTransactionOverviewData} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis stroke="rgba(255, 255, 255, 0.5)" tickFormatter={(value) => `${(value / 1000000)}M`} tick={{ fontSize: 12 }} /><Tooltip content={<CustomTooltip valueFormatter={val => val.toLocaleString()}/>} /><Legend /><defs><linearGradient id="colorNgayThuong" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/><stop offset="95%" stopColor="#8884d8" stopOpacity={0}/></linearGradient><linearGradient id="colorCuoiTuan" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/><stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/></linearGradient></defs><Area type="monotone" dataKey="NgayThuong" name="Ngày thường" stackId="1" stroke="#8884d8" fill="url(#colorNgayThuong)" /><Area type="monotone" dataKey="CuoiTuan" name="Cuối tuần" stackId="1" stroke="#82ca9d" fill="url(#colorCuoiTuan)" /></AreaChart></ResponsiveContainer></ChartCard></div>
-                    </section>
-                    <section className="mb-16">
-                        <AnimatedComponent className="flex items-center gap-4 mb-8"><Users size={32} className="text-yellow-400" /><h3 className="text-3xl font-semibold">Tăng trưởng Khách hàng & Tài khoản</h3></AnimatedComponent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">{growthMetrics.map((metric, index) => (<GrowthMetricCard key={index} icon={metric.icon} color={metric.color} absoluteValue={metric.absoluteValue} percentageValue={metric.percentageValue} name={metric.name} description={metric.description} />))}</div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><ChartCard title="Xu hướng số lượng giao dịch tài chính"><ResponsiveContainer width="100%" height="100%"><LineChart data={totalHistoricalDataTransactions} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Xu hướng số lượng khách hàng"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataCustomers} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><ChartCard title="Tài khoản tiền gửi không kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataDemandAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền gửi có kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataTermAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền vay"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataLoanAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
-                    </section>
-                    <section className="mb-16"><AnimatedComponent className="flex items-center gap-4 mb-8"><AlertTriangle size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Tình hình khắc phục lỗi</h3></AnimatedComponent>
-                        <AnimatedComponent className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-2xl overflow-hidden"><CardBackgroundPattern /><div className="relative z-10"><div className="flex items-start gap-4 pb-4"><CheckCircle className="text-green-400 mt-1 flex-shrink-0" size={24} /><div><h4 className="font-bold text-lg">Trạng thái tổng quan</h4><p className="text-gray-300">{errorDetails.status}</p></div></div>{errorDetails.webCSRError && errorDetails.webCSRError.description && (<div className="border-t border-white/10 pt-4 mt-4"><h4 className="font-bold text-lg mb-2">Sự cố ghi nhận: {`${errorDetails.webCSRError.description.substring(0, 50)}...`}</h4><p className="text-sm text-gray-400 mb-4">{`Tóm tắt ảnh hưởng: ${errorDetails.webCSRError.impact}`}</p><button onClick={() => setIsErrorDetailExpanded(!isErrorDetailExpanded)} className="flex items-center text-sm font-semibold text-yellow-400 hover:text-yellow-300 transition-colors">{isErrorDetailExpanded ? 'Thu gọn' : 'Xem chi tiết'}<ChevronRight className={`w-4 h-4 ml-1 transition-transform ${isErrorDetailExpanded ? 'rotate-90' : ''}`} /></button>{isErrorDetailExpanded && (<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-black/20 p-4 rounded-lg"><div><strong className="text-gray-400">Ngày/giờ:</strong> {errorDetails.webCSRError.date}</div><div><strong className="text-gray-400">Tác động:</strong> {errorDetails.webCSRError.impact}</div><div className="md:col-span-2"><strong className="text-gray-400">Mô tả:</strong> {errorDetails.webCSRError.description}</div><div className="md:col-span-2"><strong className="text-gray-400">Nguyên nhân:</strong> {errorDetails.webCSRError.cause}</div><div className="md:col-span-2"><strong className="text-gray-400">Xử lý & Phòng ngừa:</strong> {errorDetails.webCSRError.prevention}</div></div>)}</div>)}</div></AnimatedComponent>
-                    </section>
-                    <section className="mb-16"><AnimatedComponent className="flex items-center gap-4 mb-8"><Settings size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Quản lý & Cập nhật hệ thống</h3></AnimatedComponent><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"><AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group"><CardBackgroundPattern /><div className="relative z-10"><FileText size={40} className="mx-auto text-pink-400 mb-3" /><p className="text-4xl font-bold">{systemUpdateData.totalAppUpdates}</p><p className="text-gray-300">lượt cập nhật ứng dụng</p></div></AnimatedComponent><AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group"><CardBackgroundPattern /><div className="relative z-10"><Settings size={40} className="mx-auto text-yellow-400 mb-3" /><p className="text-4xl font-bold">{systemUpdateData.manualParamUpdates}</p><p className="text-gray-300">cập nhật tham số thủ công</p><p className="text-xs text-gray-400">{`(${systemUpdateData.manualParamProd} trên Production)`}</p></div></AnimatedComponent><AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group"><CardBackgroundPattern /><div className="relative z-10"><Database size={40} className="mx-auto text-lime-400 mb-3" /><p className="text-4xl font-bold">{systemUpdateData.systemDataUpdates}</p><p className="text-gray-300">cập nhật dữ liệu hệ thống</p><p className="text-xs text-gray-400">{`(${systemUpdateData.profileDataUpdates} cho Profile)`}</p></div></AnimatedComponent><AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group"><CardBackgroundPattern /><div className="relative z-10"><Server size={40} className="mx-auto text-blue-400 mb-3" /><p className="text-lg font-bold mt-2">Môi trường Dev/Test</p><p className="text-green-400 font-semibold">{systemUpdateData.devTestEnvStatus}</p></div></AnimatedComponent></div></section>
-                    <section><AnimatedComponent className="flex items-center gap-4 mb-8"><CalendarCheck size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Công việc tiếp theo</h3></AnimatedComponent><AnimatedComponent><div className="bg-gradient-to-r from-yellow-500/80 to-yellow-600/80 p-1 rounded-2xl shadow-2xl"><div className="bg-[#1a2c28] p-8 rounded-xl"><p className="text-xl text-center font-semibold text-white tracking-wide">{nextSteps}</p></div></div></AnimatedComponent></section>
-                    <footer className="text-center text-gray-500 text-sm mt-16">Báo cáo hoạt động định kỳ của hệ thống Core Banking xây dựng bởi Ban QLPTCB.</footer>
-                </main>
-            </div>
+            {isExporting && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-[200]">
+                    <Loader className="text-yellow-400 animate-spin" size={64} />
+                    <p className="text-xl mt-4 text-white">Đang xuất báo cáo PDF...</p>
+                </div>
+            )}
+            <div className="relative z-10">{children}</div>
         </div>
+    );
+
+    if (!isAuthenticated) {
+        return (
+            <MainContainer>
+                <LoginScreen onLogin={handleLogin} loginError={loginError} />
+            </MainContainer>
+        );
+    }
+    
+    if (!currentReport) {
+         return (
+            <MainContainer>
+                <div className="flex flex-col items-center justify-center min-h-screen">
+                    <Loader className="text-yellow-400 animate-spin" size={48} />
+                    <p className="mt-4 text-lg">Đang tải dữ liệu báo cáo...</p>
+                </div>
+            </MainContainer>
+        );
+    }
+
+    return (
+        <MainContainer>
+            <header className="sticky top-0 z-50 bg-black/20 backdrop-blur-lg border-b border-white/10 p-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-4"><BidvLogo className="h-10" /><h1 className="text-2xl sm:text-3xl font-extrabold hidden md:block" style={{ background: 'linear-gradient(to right, #C0B283, #FFD700, #DAA520, #B8860B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }}>Core Banking Operations Report</h1></div>
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <select value={currentMonth} onChange={(e) => setCurrentMonth(e.target.value)} className="bg-transparent border border-white/20 rounded-lg py-2 px-3 text-sm text-white hover:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                            {Object.keys(reports).sort((a, b) => {
+                                const [monthA, yearA] = a.split('/').map(Number);
+                                const [monthB, yearB] = b.split('/').map(Number);
+                                if (yearA !== yearB) return yearB - yearA;
+                                return monthB - monthA;
+                            }).map(month => ( <option key={month} value={month} className="bg-gray-800">{`Tháng ${month}`}</option>))}
+                        </select>
+                        <div className="relative"><button onClick={() => setFilterOpen(!filterOpen)} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"><Filter size={20} /></button>{filterOpen && (<div className="absolute top-full right-0 mt-2 w-64 bg-gray-800/90 border border-white/10 rounded-lg shadow-2xl p-4 z-20"><h3 className="text-md font-semibold mb-3">Lọc dữ liệu theo năm</h3><div className="grid grid-cols-2 gap-2">{historicalDataYears.map(year => (<label key={year} className="inline-flex items-center text-sm cursor-pointer"><input type="checkbox" value={year} checked={selectedYears.includes(year)} onChange={() => handleYearChange(year)} className="form-checkbox h-4 w-4 text-yellow-400 bg-gray-600 border-gray-500 rounded focus:ring-yellow-400" /><span className="ml-2 text-gray-200">{year}</span></label>))}</div></div>)}</div>
+                        <label htmlFor="import-file" className={`p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors ${cooldown > 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                            {cooldown > 0 ? (<span className="flex items-center text-xs w-12 justify-center"><Loader className="animate-spin h-4 w-4 mr-1" />{`${cooldown}s`}</span>) : (<Upload size={20} />)}
+                            <input id="import-file" type="file" accept=".txt,.pdf,.md,.doc,.docx" onChange={handleFileAnalysis} className="hidden" disabled={cooldown > 0} />
+                        </label>
+                        <button onClick={handleExportPdf} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"><Download size={20} /></button>
+                    </div>
+                </div>
+            </header>
+            <main id="dashboard-content" className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+                <div className="text-center mb-12 page-break-avoider"><AnimatedComponent><h2 className="text-4xl font-bold text-white">Báo cáo hoạt động Core Banking</h2><p className="text-xl text-yellow-400 mt-2">{`Tháng ${currentMonth}`}</p></AnimatedComponent></div>
+                <section className="mb-16 page-break-avoider"><div className="section-title flex items-center gap-4 mb-8"><BarChart2 size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Hiệu suất & Độ ổn định</h3></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><KpiCard title={kpiData.totalFinancialTransactions.description} value={kpiData.totalFinancialTransactions.value} icon={Activity} valueColor="text-green-400" trendValue={kpiTrends.totalFinancialTransactions} yearOverYearGrowth={kpiData.totalFinancialTransactions.yearOverYear} yoyLabel="so với cùng kỳ năm 2024" /><KpiCard title={kpiData.peakDayTransactions.description} value={kpiData.peakDayTransactions.value} icon={TrendingUp} valueColor="text-green-400" description={`Ngày: ${kpiData.peakDayTransactions.date}`} trendValue={kpiTrends.peakDayTransactions} /><KpiCard title={kpiData.peakTPS.description} value={kpiData.peakTPS.value} icon={Activity} valueColor="text-orange-400" description={`Ngày: ${kpiData.peakTPS.date}`} trendValue={kpiTrends.peakTPS} /><KpiCard title={kpiData.avgDayEndDuration.description} value={kpiData.avgDayEndDuration.value} icon={Clock} valueColor="text-indigo-400" trendValue={kpiTrends.avgDayEndDuration} trendDirection="down" /><KpiCard title={kpiData.avgResponseTime.description} value={kpiData.avgResponseTime.value} icon={Activity} valueColor="text-teal-400" trendValue={kpiTrends.avgResponseTime} trendDirection="down" /><KpiCard title={kpiData.avgCPUUtilization.description} value={kpiData.avgCPUUtilization.value} icon={Cpu} valueColor="text-blue-400" trendValue={kpiTrends.avgCPUUtilization} trendDirection="down" /></div></section>
+                <section className="mb-16 grid grid-cols-1 lg:grid-cols-5 gap-6 page-break-avoider">
+                    <div className="lg:col-span-2"><ChartCard title={`Tỷ trọng giao dịch theo kênh`}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={processedTransactionByChannelData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={80} outerRadius={120} fill="#8884d8" paddingAngle={2} stroke="none">{processedTransactionByChannelData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}</Pie><Tooltip content={<CustomTooltip unit="%" />} /><Legend iconType="circle" wrapperStyle={{fontSize: "12px", color: "#d1d5db"}}/></PieChart></ResponsiveContainer></ChartCard></div>
+                    <div className="lg:col-span-3"><ChartCard title="Số lượng giao dịch trung bình theo ngày"><ResponsiveContainer width="100%" height="100%"><AreaChart data={avgDailyTransactionOverviewData} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis stroke="rgba(255, 255, 255, 0.5)" tickFormatter={(value) => `${(value / 1000000)}M`} tick={{ fontSize: 12 }} /><Tooltip content={<CustomTooltip valueFormatter={val => val.toLocaleString()}/>} /><Legend wrapperStyle={{color: "#d1d5db"}} /><defs><linearGradient id="colorNgayThuong" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/><stop offset="95%" stopColor="#8884d8" stopOpacity={0}/></linearGradient><linearGradient id="colorCuoiTuan" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/><stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/></linearGradient></defs><Area type="monotone" dataKey="NgayThuong" name="Ngày thường" stackId="1" stroke="#8884d8" fill="url(#colorNgayThuong)" /><Area type="monotone" dataKey="CuoiTuan" name="Cuối tuần" stackId="1" stroke="#82ca9d" fill="url(#colorCuoiTuan)" /></AreaChart></ResponsiveContainer></ChartCard></div>
+                </section>
+                <section className="mb-16 page-break-avoider">
+                    <div className="section-title-wrapper">
+                        <div className="section-title flex items-center gap-4 mb-8"><Users size={32} className="text-yellow-400" /><h3 className="text-3xl font-semibold">Tăng trưởng Khách hàng & Tài khoản</h3></div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 page-break-avoider">{growthMetrics.map((metric, index) => (<GrowthMetricCard key={index} icon={metric.icon} color={metric.color} absoluteValue={metric.absoluteValue} percentageValue={metric.percentageValue} name={metric.name} description={metric.description} />))}</div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><ChartCard title="Xu hướng số lượng giao dịch tài chính"><ResponsiveContainer width="100%" height="100%"><LineChart data={totalHistoricalDataTransactions} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Xu hướng số lượng khách hàng"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataCustomers} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><ChartCard title="Tài khoản tiền gửi không kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataDemandAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền gửi có kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataTermAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền vay"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataLoanAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
+                </section>
+                <section className="mb-16 page-break-avoider"><div className="section-title flex items-center gap-4 mb-8"><AlertTriangle size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Tình hình khắc phục lỗi</h3></div>
+                    <AnimatedComponent className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-2xl overflow-hidden"><div className="relative z-10"><div className="flex items-start gap-4 pb-4"><CheckCircle className="text-green-400 mt-1 flex-shrink-0" size={24} /><div><h4 className="font-bold text-lg text-white">Trạng thái tổng quan</h4><p className="text-gray-300">{errorDetails.status}</p></div></div>{errorDetails.webCSRError && errorDetails.webCSRError.description && (<div className="border-t border-white/10 pt-4 mt-4"><h4 className="font-bold text-lg mb-2 text-white">Sự cố ghi nhận: {`${errorDetails.webCSRError.description.substring(0, 50)}...`}</h4><p className="text-sm text-gray-400 mb-4">{`Tóm tắt ảnh hưởng: ${errorDetails.webCSRError.impact}`}</p><button onClick={() => setIsErrorDetailExpanded(!isErrorDetailExpanded)} className="flex items-center text-sm font-semibold text-yellow-400 hover:text-yellow-300 transition-colors">{isErrorDetailExpanded ? 'Thu gọn' : 'Xem chi tiết'}<ChevronRight className={`w-4 h-4 ml-1 transition-transform ${isErrorDetailExpanded ? 'rotate-90' : ''}`} /></button>{isErrorDetailExpanded && (<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-black/20 p-4 rounded-lg"><div><strong className="text-gray-400">Ngày/giờ:</strong> {errorDetails.webCSRError.date}</div><div><strong className="text-gray-400">Tác động:</strong> {errorDetails.webCSRError.impact}</div><div className="md:col-span-2"><strong className="text-gray-400">Mô tả:</strong> {errorDetails.webCSRError.description}</div><div className="md:col-span-2"><strong className="text-gray-400">Nguyên nhân:</strong> {errorDetails.webCSRError.cause}</div><div className="md:col-span-2"><strong className="text-gray-400">Xử lý & Phòng ngừa:</strong> {errorDetails.webCSRError.prevention}</div></div>)}</div>)}</div></AnimatedComponent>
+                </section>
+                <section className="mb-16 page-break-avoider"><div className="section-title flex items-center gap-4 mb-8"><Settings size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Quản lý & Cập nhật hệ thống</h3></div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group flex flex-col justify-center items-center">
+                            <div className="relative z-10">
+                                <div className="flex justify-center items-center h-12 mb-2"><FileText size={40} className="text-pink-400" /></div>
+                                <p className="text-4xl font-bold text-white">{systemUpdateData.totalAppUpdates}</p>
+                                <p className="text-gray-300">lượt cập nhật ứng dụng</p>
+                            </div>
+                        </AnimatedComponent>
+                        <AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group flex flex-col justify-center items-center">
+                            <div className="relative z-10">
+                                <div className="flex justify-center items-center h-12 mb-2"><Settings size={40} className="text-yellow-400" /></div>
+                                <p className="text-4xl font-bold text-white">{systemUpdateData.manualParamUpdates}</p>
+                                <p className="text-gray-300">cập nhật tham số thủ công</p>
+                                <p className="text-xs text-gray-400">{`(${systemUpdateData.manualParamProd} trên Production)`}</p>
+                            </div>
+                        </AnimatedComponent>
+                        <AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group flex flex-col justify-center items-center">
+                            <div className="relative z-10">
+                                <div className="flex justify-center items-center h-12 mb-2"><Database size={40} className="text-lime-400" /></div>
+                                <p className="text-4xl font-bold text-white">{systemUpdateData.systemDataUpdates}</p>
+                                <p className="text-gray-300">cập nhật dữ liệu hệ thống</p>
+                                <p className="text-xs text-gray-400">{`(${systemUpdateData.profileDataUpdates} cho Profile)`}</p>
+                            </div>
+                        </AnimatedComponent>
+                        <AnimatedComponent className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center relative overflow-hidden group flex flex-col justify-center items-center">
+                            <div className="relative z-10">
+                                <div className="flex justify-center items-center h-12 mb-2"><Server size={40} className="text-blue-400" /></div>
+                                <p className="text-lg font-bold mt-2 text-white">Môi trường Dev/Test</p>
+                                <p className="text-green-400 font-semibold">{systemUpdateData.devTestEnvStatus}</p>
+                            </div>
+                        </AnimatedComponent>
+                    </div>
+                </section>
+                <section className="page-break-avoider"><div className="section-title flex items-center gap-4 mb-8"><CalendarCheck size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Công việc tiếp theo</h3></div><AnimatedComponent><div className="bg-gradient-to-r from-yellow-500/80 to-yellow-600/80 p-1 rounded-2xl shadow-2xl"><div className="bg-[#1a2c28] p-8 rounded-xl"><p className="text-xl text-center font-semibold text-white tracking-wide">{nextSteps}</p></div></div></AnimatedComponent></section>
+                <footer className="text-center text-gray-500 text-sm mt-16 page-break-avoider">Báo cáo hoạt động định kỳ của hệ thống Core Banking xây dựng bởi Ban QLPTCB.</footer>
+            </main>
+        </MainContainer>
     );
 };
 
