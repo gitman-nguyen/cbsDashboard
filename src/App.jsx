@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { ArrowUp, ArrowDown, CheckCircle, AlertTriangle, Cpu, Clock, Activity, CalendarCheck, FileText, Settings, Database, Server, Minimize2, Maximize2, ChevronRight, BrainCircuit, Loader, TrendingUp, Users, Filter, Download, Upload, BarChart2, LogIn, User, Lock } from 'lucide-react';
+import { ArrowUp, ArrowDown, CheckCircle, AlertTriangle, Cpu, Clock, Activity, CalendarCheck, FileText, Settings, Database, Server, X, BrainCircuit, Loader, TrendingUp, Users, Filter, Download, Upload, BarChart2, LogIn, User, Lock, ChevronRight } from 'lucide-react';
 
 // --- STYLING & ANIMATION COMPONENTS ---
 
@@ -205,6 +205,146 @@ const LoginScreen = ({ onLogin, loginError }) => {
     );
 };
 
+// --- PRINTABLE REPORT COMPONENT ---
+const PrintableReport = React.forwardRef(({ reportData, historicalData, selectedYears, lineColors, isErrorDetailExpanded }, ref) => {
+    if (!reportData) return null;
+
+    const { kpiData, transactionByChannelData, growthMetrics, errorDetails, systemUpdateData, nextSteps } = reportData;
+    const { totalHistoricalDataTransactions, historicalDataCustomers, historicalDataDemandAccounts, historicalDataTermAccounts, historicalDataLoanAccounts, avgDailyTransactionOverviewData } = historicalData;
+    const processedTransactionByChannelData = transactionByChannelData.length > 10 
+        ? [...transactionByChannelData.sort((a,b) => b.value - a.value).slice(0, 9), { name: 'Khác', value: transactionByChannelData.slice(9).reduce((acc, cur) => acc + cur.value, 0), color: '#9ca3af' }]
+        : transactionByChannelData;
+
+    return (
+        <div ref={ref} className="bg-white text-gray-800 p-8 font-sans">
+            <div className="text-center mb-12 page-break-avoider">
+                <h2 className="text-4xl font-bold text-gray-900">Báo cáo hoạt động Core Banking</h2>
+                <p className="text-xl text-gray-600 mt-2">{`Tháng ${reportData.month}`}</p>
+            </div>
+
+            <section className="mb-12 page-break-avoider">
+                <div className="flex items-center gap-4 mb-6"><BarChart2 size={28} className="text-blue-600" /><h3 className="text-2xl font-bold text-gray-800">Hiệu suất & Độ ổn định</h3></div>
+                <div className="grid grid-cols-3 gap-4">
+                    {Object.values(kpiData).map((kpi, i) => (
+                        <div key={i} className="border border-gray-200 p-4 rounded-lg shadow-sm">
+                            <h4 className="text-sm font-semibold text-gray-500">{kpi.description}</h4>
+                            <p className="text-3xl font-bold text-gray-900 mt-1">{kpi.value}</p>
+                            {kpi.date && <p className="text-xs text-gray-500 mt-1">Ngày: {kpi.date}</p>}
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            <section className="mb-12 grid grid-cols-1 lg:grid-cols-5 gap-6 page-break-avoider">
+                <div className="lg:col-span-2 border border-gray-200 p-4 rounded-lg shadow-sm">
+                    <h3 className="text-lg font-bold mb-4 text-center">Tỷ trọng giao dịch theo kênh</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <PieChart isAnimationActive={false}>
+                            <Pie data={processedTransactionByChannelData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} fill="#8884d8" paddingAngle={2} labelLine={false} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                                {processedTransactionByChannelData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className="lg:col-span-3 border border-gray-200 p-4 rounded-lg shadow-sm">
+                    <h3 className="text-lg font-bold mb-4 text-center">Số lượng giao dịch trung bình theo ngày</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={avgDailyTransactionOverviewData} isAnimationActive={false} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                            <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} tick={{ fontSize: 10 }} />
+                            <Tooltip />
+                            <Legend />
+                            <Area type="monotone" dataKey="NgayThuong" name="Ngày thường" stackId="1" stroke="#8884d8" fill="#8884d8" />
+                            <Area type="monotone" dataKey="CuoiTuan" name="Cuối tuần" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </section>
+            
+             <section className="mb-12 page-break-avoider">
+                <div className="flex items-center gap-4 mb-6"><Users size={28} className="text-blue-600" /><h3 className="text-2xl font-bold text-gray-800">Tăng trưởng Khách hàng & Tài khoản</h3></div>
+                <div className="grid grid-cols-5 gap-4 mb-6">
+                    {growthMetrics.map((metric, index) => {
+                        const Icon = metric.icon;
+                        const colorClass = metric.percentageValue.startsWith('+') ? 'text-green-600' : 'text-red-600';
+                        return (
+                            <div key={index} className="border border-gray-200 p-4 rounded-lg shadow-sm text-center">
+                                <Icon size={24} className={`mx-auto ${colorClass}`} />
+                                <p className="text-2xl font-bold mt-2">{metric.absoluteValue}</p>
+                                <p className={`font-semibold ${colorClass}`}>{metric.percentageValue}</p>
+                                <p className="text-xs text-gray-600 mt-1">{metric.name}</p>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Add line charts here */}
+                </div>
+            </section>
+            
+             <section className="mb-12 page-break-avoider">
+                <div className="flex items-center gap-4 mb-6"><AlertTriangle size={28} className="text-orange-600" /><h3 className="text-2xl font-bold text-gray-800">Tình hình khắc phục lỗi</h3></div>
+                 <div className="border border-gray-200 p-4 rounded-lg shadow-sm">
+                     <div className="flex items-start gap-4"><CheckCircle className="text-green-600 mt-1 flex-shrink-0" size={20} /><div><h4 className="font-bold text-gray-800">Trạng thái tổng quan</h4><p className="text-gray-600">{errorDetails.status}</p></div></div>
+                     {errorDetails.webCSRError && errorDetails.webCSRError.description && (
+                         <div className="border-t border-gray-200 pt-4 mt-4">
+                             <h4 className="font-bold text-gray-800">Sự cố ghi nhận</h4>
+                             <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                 <div><strong className="text-gray-600">Ngày/giờ:</strong> {errorDetails.webCSRError.date}</div>
+                                 <div><strong className="text-gray-600">Tác động:</strong> {errorDetails.webCSRError.impact}</div>
+                                 <div className="md:col-span-2"><strong className="text-gray-600">Mô tả:</strong> {errorDetails.webCSRError.description}</div>
+                                 <div className="md:col-span-2"><strong className="text-gray-600">Nguyên nhân:</strong> {errorDetails.webCSRError.cause}</div>
+                                 <div className="md:col-span-2"><strong className="text-gray-600">Xử lý & Phòng ngừa:</strong> {errorDetails.webCSRError.prevention}</div>
+                             </div>
+                         </div>
+                     )}
+                 </div>
+            </section>
+        </div>
+    );
+});
+
+// --- PRINT PREVIEW MODAL ---
+const PrintPreviewModal = ({ onConfirm, onCancel, reportData, historicalData, selectedYears, lineColors }) => {
+    const printContentRef = useRef();
+
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100]">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] flex flex-col">
+                <header className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <h2 className="text-xl font-bold text-gray-800">Xem trước báo cáo</h2>
+                    <div className="flex items-center gap-4">
+                        <button onClick={onCancel} className="text-gray-500 hover:text-gray-800">
+                            <X size={24} />
+                        </button>
+                        <button onClick={() => onConfirm(printContentRef.current)} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center gap-2">
+                            <Download size={18} />
+                            Xác nhận & Xuất PDF
+                        </button>
+                    </div>
+                </header>
+                <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                     <PrintableReport ref={printContentRef} reportData={reportData} historicalData={historicalData} selectedYears={selectedYears} lineColors={lineColors} />
+                </main>
+            </div>
+        </div>
+    );
+};
+
+// FIX: Moved this function outside of the App component
+const getLatestMonth = (reports) => {
+    const monthKeys = Object.keys(reports);
+    if (monthKeys.length === 0) return '';
+    monthKeys.sort((a, b) => {
+        const [monthA, yearA] = a.split('/').map(Number);
+        const [monthB, yearB] = b.split('/').map(Number);
+        if (yearA !== yearB) return yearB - yearA;
+        return monthB - monthA;
+    });
+    return monthKeys[0];
+};
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -214,6 +354,8 @@ const App = () => {
     const [analysisMessage, setAnalysisMessage] = useState("AI đang phân tích báo cáo...");
     const [cooldown, setCooldown] = useState(0);
     const [confirmationData, setConfirmationData] = useState(null);
+    const [showPrintPreview, setShowPrintPreview] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     const handleLogin = (username, password) => {
         // Hardcoded credentials as per user request
@@ -272,43 +414,38 @@ const App = () => {
     };
 
     const initialReportData = {
-      '01/2025': {
-        kpiData: { totalFinancialTransactions: { value: "384,7M", rawValue: 384731977, description: "Tổng số giao dịch tài chính", yearOverYear: "+34.39%" }, peakDayTransactions: { value: "14,3M", rawValue: 14300000, date: "10/01/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 45m", rawMinutes: 165, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "4.89ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "798", date: "10/01/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.55%", rawPercentage: 4.55, description: "%CPU trung bình máy chủ" } },
+      '01/2025': { month: "01/2025", kpiData: { totalFinancialTransactions: { value: "384.73M", rawValue: 384731977, description: "Tổng số giao dịch tài chính", yearOverYear: "+34.39%" }, peakDayTransactions: { value: "14,3M", rawValue: 14300000, date: "10/01/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 45m", rawMinutes: 165, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "4.89ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "798", date: "10/01/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.55%", rawPercentage: 4.55, description: "%CPU trung bình máy chủ" } },
         transactionByChannelData: [ { name: "TT Song phương", value: 45, color: "#4A8D6E" }, { name: "Napas 24x7", value: 26, color: "#E58A00" }, { name: "TTHDOL", value: 10, color: "#B36D3A" }, { name: "SmartBanking", value: 9, color: "#884D98" }, { name: "Khác", value: 10, color: "#9ca3af" } ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+34.39%", absoluteValue: "384,7M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.90%", absoluteValue: "22.04M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.76%", absoluteValue: "12.86M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+8.25%", absoluteValue: "2.90M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+4.03%", absoluteValue: "1.23M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
+        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+34.39%", absoluteValue: "384.73M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.90%", absoluteValue: "22.04M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.76%", absoluteValue: "12.86M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+8.25%", absoluteValue: "2.90M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+4.03%", absoluteValue: "1.23M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
         errorDetails: { status: "Trong tháng 01/2025, hệ thống core banking không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: {} },
         systemUpdateData: { totalAppUpdates: "38", manualParamUpdates: "185", manualParamProd: "35", systemDataUpdates: "9", profileDataUpdates: "5", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
         nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
       },
-      '02/2025': {
-        kpiData: { totalFinancialTransactions: { value: "279,1M", rawValue: 279081583, description: "Tổng số giao dịch tài chính", yearOverYear: "+17.80%" }, peakDayTransactions: { value: "10,6M", rawValue: 10600000, date: "25/02/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 42m", rawMinutes: 162, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "4.95ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "750", date: "25/02/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.31%", rawPercentage: 4.31, description: "%CPU trung bình máy chủ" } },
+      '02/2025': { month: "02/2025", kpiData: { totalFinancialTransactions: { value: "279.08M", rawValue: 279081583, description: "Tổng số giao dịch tài chính", yearOverYear: "+17.80%" }, peakDayTransactions: { value: "10,6M", rawValue: 10600000, date: "25/02/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 42m", rawMinutes: 162, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "4.95ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "750", date: "25/02/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.31%", rawPercentage: 4.31, description: "%CPU trung bình máy chủ" } },
         transactionByChannelData: [ { name: "TT Song phương", value: 42, color: "#4A8D6E" }, { name: "Napas 24x7", value: 29, color: "#E58A00" }, { name: "TTHDOL", value: 11, color: "#B36D3A" }, { name: "SmartBanking", value: 8, color: "#884D98" }, { name: "Khác", value: 10, color: "#9ca3af" } ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+17.80%", absoluteValue: "279,1M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.91%", absoluteValue: "22.21M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.91%", absoluteValue: "12.85M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+5.40%", absoluteValue: "2.95M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+4.44%", absoluteValue: "1.22M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
+        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+17.80%", absoluteValue: "279.08M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.91%", absoluteValue: "22.21M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.91%", absoluteValue: "12.85M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+5.40%", absoluteValue: "2.95M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+4.44%", absoluteValue: "1.22M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
         errorDetails: { status: "Trong tháng 02/2025, hệ thống core banking không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: {} },
         systemUpdateData: { totalAppUpdates: "35", manualParamUpdates: "170", manualParamProd: "30", systemDataUpdates: "7", profileDataUpdates: "4", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
         nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
       },
-      '03/2025': {
-        kpiData: { totalFinancialTransactions: { value: "370,1M", rawValue: 370057722, description: "Tổng số giao dịch tài chính", yearOverYear: "+31.69%" }, peakDayTransactions: { value: "12,5M", rawValue: 12500000, date: "11/03/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 51m", rawMinutes: 171, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.01ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "810", date: "11/03/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.78%", rawPercentage: 4.78, description: "%CPU trung bình máy chủ" } },
+      '03/2025': { month: "03/2025", kpiData: { totalFinancialTransactions: { value: "370.06M", rawValue: 370057722, description: "Tổng số giao dịch tài chính", yearOverYear: "+31.69%" }, peakDayTransactions: { value: "12,5M", rawValue: 12500000, date: "11/03/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 51m", rawMinutes: 171, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.01ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "810", date: "11/03/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.78%", rawPercentage: 4.78, description: "%CPU trung bình máy chủ" } },
         transactionByChannelData: [ { name: "TT Song phương", value: 43, color: "#4A8D6E" }, { name: "Napas 24x7", value: 28, color: "#E58A00" }, { name: "TTHDOL", value: 11, color: "#B36D3A" }, { name: "SmartBanking", value: 8, color: "#884D98" }, { name: "Khác", value: 10, color: "#9ca3af" } ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+31.69%", absoluteValue: "370,1M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.61%", absoluteValue: "22.40M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.58%", absoluteValue: "12.89M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+4.41%", absoluteValue: "2.95M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+3.92%", absoluteValue: "1.23M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
+        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+31.69%", absoluteValue: "370.06M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.61%", absoluteValue: "22.40M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-3.58%", absoluteValue: "12.89M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+4.41%", absoluteValue: "2.95M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+3.92%", absoluteValue: "1.23M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
         errorDetails: { status: "Trong tháng 03/2025, hệ thống core banking không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: {} },
         systemUpdateData: { totalAppUpdates: "40", manualParamUpdates: "190", manualParamProd: "36", systemDataUpdates: "10", profileDataUpdates: "5", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
         nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
       },
-      '04/2025': {
-        kpiData: { totalFinancialTransactions: { value: "385,1M", rawValue: 385146829, description: "Tổng số giao dịch tài chính", yearOverYear: "+33.72%" }, peakDayTransactions: { value: "13,2M", rawValue: 13200000, date: "28/04/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 48m", rawMinutes: 168, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.11ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "822", date: "28/04/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.85%", rawPercentage: 4.85, description: "%CPU trung bình máy chủ" } },
+      '04/2025': { month: "04/2025", kpiData: { totalFinancialTransactions: { value: "385.15M", rawValue: 385146829, description: "Tổng số giao dịch tài chính", yearOverYear: "+33.72%" }, peakDayTransactions: { value: "13,2M", rawValue: 13200000, date: "28/04/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 48m", rawMinutes: 168, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.11ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "822", date: "28/04/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.85%", rawPercentage: 4.85, description: "%CPU trung bình máy chủ" } },
         transactionByChannelData: [ { name: "TT Song phương", value: 44, color: "#4A8D6E" }, { name: "Napas 24x7", value: 27, color: "#E58A00" }, { name: "TTHDOL", value: 11, color: "#B36D3A" }, { name: "SmartBanking", value: 8, color: "#884D98" }, { name: "Khác", value: 10, color: "#9ca3af" } ],
-        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+33.72%", absoluteValue: "385,1M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.22%", absoluteValue: "22.57M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-4.14%", absoluteValue: "12.89M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+3.78%", absoluteValue: "2.95M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+3.89%", absoluteValue: "1.23M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
+        growthMetrics: [ { name: "Tổng giao dịch tài chính", percentageValue: "+33.72%", absoluteValue: "385.15M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tổng số khách hàng", percentageValue: "+13.22%", absoluteValue: "22.57M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản KKH", percentageValue: "-4.14%", absoluteValue: "12.89M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản CKH", percentageValue: "+3.78%", absoluteValue: "2.95M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, { name: "Tài khoản tiền vay", percentageValue: "+3.89%", absoluteValue: "1.23M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" } ],
         errorDetails: { status: "Trong tháng 04/2025, hệ thống core banking không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.", webCSRError: {} },
         systemUpdateData: { totalAppUpdates: "41", manualParamUpdates: "201", manualParamProd: "40", systemDataUpdates: "8", profileDataUpdates: "6", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
         nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
       },
-      '05/2025': {
-        kpiData: { totalFinancialTransactions: { value: "403,5M", rawValue: 403585961, description: "Tổng số giao dịch tài chính", yearOverYear: "30.72%" }, peakDayTransactions: { value: "15M", rawValue: 15000000, date: "12/05/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 49m", rawMinutes: 169, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.04ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "835", date: "09/05/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.92%", rawPercentage: 4.92, description: "%CPU trung bình máy chủ" }, },
+      '05/2025': { month: "05/2025", kpiData: { totalFinancialTransactions: { value: "403.59M", rawValue: 403585961, description: "Tổng số giao dịch tài chính", yearOverYear: "30.72%" }, peakDayTransactions: { value: "15M", rawValue: 15000000, date: "12/05/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 49m", rawMinutes: 169, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.04ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "835", date: "09/05/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "4.92%", rawPercentage: 4.92, description: "%CPU trung bình máy chủ" }, },
         transactionByChannelData: [ { name: 'TT Song phương (B2B)', value: 44, color: '#4A8D6E' }, { name: 'IBFT', value: 27, color: '#E58A00' }, { name: 'TTHDOL', value: 11, color: '#B36D3A' }, { name: 'SMB', value: 8, color: '#884D98' }, { name: 'ATM', value: 3, color: '#6A5ACD' }, { name: 'Điện DRO', value: 2, color: '#20B2AA' }, { name: 'Thu phí tích hợp', value: 2, color: '#D2B48C' }, { name: 'OMNI', value: 1, color: '#4682B4' }, { name: 'CRM', value: 1, color: '#9ACD32' }, { name: 'TPTL', value: 0.8, color: '#FF6347' }, { name: 'IMAP', value: 0.7, color: '#40E0D0' }, { name: 'POS', value: 0.5, color: '#EE82EE' } ],
         growthMetrics: [ 
-            { name: "Tổng giao dịch tài chính", percentageValue: "+30.72%", absoluteValue: "403,5M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
+            { name: "Tổng giao dịch tài chính", percentageValue: "+30.72%", absoluteValue: "403.59M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
             { name: "Tổng số khách hàng", percentageValue: "+12.40%", absoluteValue: "22.76M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
             { name: "Tài khoản KKH", percentageValue: "-4.61%", absoluteValue: "12.89M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, 
             { name: "Tài khoản CKH", percentageValue: "+3.24%", absoluteValue: "2.95M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
@@ -318,8 +455,7 @@ const App = () => {
         systemUpdateData: { totalAppUpdates: "42", manualParamUpdates: "209", manualParamProd: "46", systemDataUpdates: "8", profileDataUpdates: "6", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
         nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
       },
-      '06/2025': {
-        kpiData: { totalFinancialTransactions: { value: "399,6M", rawValue: 399640500, description: "Tổng số giao dịch tài chính", yearOverYear: "35.04%" }, peakDayTransactions: { value: "16,1M", rawValue: 16100000, date: "10/06/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 55m", rawMinutes: 175, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.16ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "557", date: "10/06/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "5.39%", rawPercentage: 5.39, description: "%CPU trung bình máy chủ" }, },
+      '06/2025': { month: "06/2025", kpiData: { totalFinancialTransactions: { value: "399.64M", rawValue: 399640500, description: "Tổng số giao dịch tài chính", yearOverYear: "35.04%" }, peakDayTransactions: { value: "16,1M", rawValue: 16100000, date: "10/06/2025", description: "Giao dịch ngày cao điểm" }, avgDayEndDuration: { value: "2h 55m", rawMinutes: 175, description: "Thời gian DayEnd trung bình" }, avgResponseTime: { value: "5.16ms", description: "Tốc độ phản hồi trung bình" }, peakTPS: { value: "557", date: "10/06/2025", description: "TPS cao nhất" }, avgCPUUtilization: { value: "5.39%", rawPercentage: 5.39, description: "%CPU trung bình máy chủ" }, },
         transactionByChannelData: [
             { name: 'TT Song phương', value: 43, color: '#4A8D6E' },
             { name: 'Napas 24x7', value: 28, color: '#E58A00' },
@@ -333,7 +469,7 @@ const App = () => {
             { name: 'IMAP', value: 1, color: '#FF6347' },
         ],
         growthMetrics: [ 
-            { name: "Tổng giao dịch tài chính", percentageValue: "+35.04%", absoluteValue: "399,6M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
+            { name: "Tổng giao dịch tài chính", percentageValue: "+35.04%", absoluteValue: "399.64M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
             { name: "Tổng số khách hàng", percentageValue: "+12.14%", absoluteValue: "22.96M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
             { name: "Tài khoản KKH", percentageValue: "-4.31%", absoluteValue: "12.92M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" }, 
             { name: "Tài khoản CKH", percentageValue: "+4.78%", absoluteValue: "2.97M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }, 
@@ -343,32 +479,60 @@ const App = () => {
         systemUpdateData: { totalAppUpdates: "46", manualParamUpdates: "193", manualParamProd: "38", systemDataUpdates: "11", profileDataUpdates: "6", devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu" },
         nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
       },
+      '07/2025': {
+        month: "07/2025",
+        kpiData: {
+            totalFinancialTransactions: { value: "398.97M", rawValue: 398967202, description: "Tổng số giao dịch tài chính", yearOverYear: "+33.61%" },
+            peakDayTransactions: { value: "17.3M", rawValue: 17300000, date: "10/07/2025", description: "Giao dịch ngày cao điểm" },
+            avgDayEndDuration: { value: "3h 02m", rawMinutes: 182, description: "Thời gian DayEnd trung bình" },
+            avgResponseTime: { value: "5.2ms", description: "Tốc độ phản hồi trung bình" },
+            peakTPS: { value: "528", date: "14/07/2025", description: "TPS cao nhất" },
+            avgCPUUtilization: { value: "5.30%", rawPercentage: 5.30, description: "%CPU trung bình máy chủ" }
+        },
+        transactionByChannelData: [
+            { name: 'TT Song phương', value: 42, color: '#4A8D6E' },
+            { name: '24x7 Napas', value: 30, color: '#E58A00' },
+            { name: 'Online bill payment', value: 12, color: '#B36D3A' },
+            { name: 'SmartBanking', value: 7, color: '#884D98' },
+            { name: 'BATCH', value: 3, color: '#6A5ACD' },
+            { name: 'Khác', value: 6, color: '#9ca3af' }
+        ],
+        growthMetrics: [
+            { name: "Tổng giao dịch tài chính", percentageValue: "+33.61%", absoluteValue: "398.97M", icon: TrendingUp, color: "text-green-400", description: "So với cùng kỳ 2024" },
+            { name: "Tổng số khách hàng", percentageValue: "+12.16%", absoluteValue: "23.24M", icon: Users, color: "text-green-400", description: "So với cùng kỳ 2024" },
+            { name: "Tài khoản KKH", percentageValue: "-3.12%", absoluteValue: "13.02M", icon: ArrowDown, color: "text-red-400", description: "So với cùng kỳ 2024" },
+            { name: "Tài khoản CKH", percentageValue: "+4.39%", absoluteValue: "2.96M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" },
+            { name: "Tài khoản tiền vay", percentageValue: "+1.82%", absoluteValue: "1.23M", icon: ArrowUp, color: "text-green-400", description: "So với cùng kỳ 2024" }
+        ],
+        errorDetails: {
+            status: "Trong tháng 07/2025, hệ thống core banking không phát sinh lỗi gây gián đoạn giao dịch trên các kênh.",
+            webCSRError: {}
+        },
+        systemUpdateData: {
+            totalAppUpdates: "41",
+            manualParamUpdates: "217",
+            manualParamProd: "54",
+            systemDataUpdates: "11",
+            profileDataUpdates: "5",
+            devTestEnvStatus: "Duy trì ổn định, đáp ứng các yêu cầu"
+        },
+        nextSteps: "Tiếp tục theo dõi chặt chẽ hoạt động của hệ thống Core banking Profile."
+      }
+    };
+    const historicalData = {
+        totalHistoricalDataTransactions: [ { month: 'T1', '2019': null, '2020': 70398653, '2021': 102638103, '2022': 130703966, '2023': 181356164, '2024': 286287309, '2025': 384731977 }, { month: 'T2', '2019': 36279421, '2020': 57879463, '2021': 89245849, '2022': 83360056, '2023': 158938838, '2024': 236921056, '2025': 279081583 }, { month: 'T3', '2019': 51820298, '2020': 68676065, '2021': 102350186, '2022': 122619991, '2023': 199759104, '2024': 281081993, '2025': 370057722 }, { month: 'T4', '2019': 52226477, '2020': 58819178, '2021': 103837369, '2022': 128137360, '2023': 201192652, '2024': 288032713, '2025': 385146829 }, { month: 'T5', '2019': 55369694, '2020': 68579336, '2021': 103046250, '2022': 130494810, '2023': 206797842, '2024': 308745155, '2025': 403585961 }, { month: 'T6', '2019': 56695303, '2020': 73334371, '2021': 103126615, '2022': 133375455, '2023': 204752945, '2024': 295939971, '2025': 399640500 }, { month: 'T7', '2019': 57697356, '2020': 84454355, '2021': 102540561, '2022': 138090542, '2023': 214731121, '2024': 298608364, '2025': 398967202 }, { month: 'T8', '2019': 58799243, '2020': 77298869, '2021': 96668079, '2022': 148734220, '2023': 240964790, '2024': 324080355, '2025': null }, { month: 'T9', '2019': 61182154, '2020': 85248817, '2021': 104123078, '2022': 153754867, '2023': 211926840, '2024': 318656429, '2025': null }, { month: 'T10', '2019': 67396522, '2020': 86593211, '2021': 119182757, '2022': 167486378, '2023': 254211060, '2024': 355536341, '2025': null }, { month: 'T11', '2019': 64845235, '2020': 88003871, '2021': 123256901, '2022': 172958138, '2023': 256737976, '2024': 352507647, '2025': null }, { month: 'T12', '2019': 82155719, '2020': 106484240, '2021': 140437165, '2022': 193265178, '2023': 280907282, '2024': 373647363, '2025': null } ],
+        historicalDataCustomers: [ { month: 'T1', '2019': 9656487, '2020': 10786031, '2021': 12030916, '2022': 13848173, '2023': 15952993, '2024': 19355122, '2025': 22044666 }, { month: 'T2', '2019': 9721375, '2020': 10896651, '2021': 12091951, '2022': 13951141, '2023': 16122033, '2024': 19497444, '2025': 22208411 }, { month: 'T3', '2019': 9867924, '2020': 11021568, '2021': 12245414, '2022': 13836463, '2023': 16394484, '2024': 19716610, '2025': 22400157 }, { month: 'T4', '2019': 9995512, '2020': 11102005, '2021': 12428870, '2022': 14031236, '2023': 16699062, '2024': 19936667, '2025': 22571454 }, { month: 'T5', '2019': 10122903, '2020': 11215459, '2021': 12594700, '2022': 14230788, '2023': 17005047, '2024': 20247475, '2025': 22759026 }, { month: 'T6', '2019': 10230944, '2020': 11348598, '2021': 12732373, '2022': 14411889, '2023': 17396120, '2024': 20477446, '2025': 22964050 }, { month: 'T7', '2019': 10360057, '2020': 11487241, '2021': 12836365, '2022': 14564994, '2023': 17767003, '2024': 20717127, '2025': 23236367 }, { month: 'T8', '2019': 10499226, '2020': 11603118, '2021': 12927206, '2022': 14765195, '2023': 18126071, '2024': 21005215, '2025': null }, { month: 'T9', '2019': 10338024, '2020': 11480809, '2021': 13048090, '2022': 15035510, '2023': 18405803, '2024': 21298283, '2025': null }, { month: 'T10', '2019': 10492757, '2020': 11642540, '2021': 13273258, '2022': 15319916, '2023': 18734816, '2024': 21536440, '2025': null }, { month: 'T11', '2019': 10606801, '2020': 11802198, '2021': 13538154, '2022': 15628798, '2023': 18979659, '2024': 21760624, '2025': null }, { month: 'T12', '2019': 10721178, '2020': 11935334, '2021': 13751551, '2022': 15847618, '2023': 19174616, '2024': 21915101, '2025': null } ],
+        historicalDataDemandAccounts: [ { month: 'T1', '2019': 7183048, '2020': 7649190, '2021': 8164174, '2022': 8974079, '2023': 11023252, '2024': 13359499, '2025': 12856906 }, { month: 'T2', '2019': 7157943, '2020': 7740033, '2021': 8143253, '2022': 9018363, '2023': 11160506, '2024': 13376152, '2025': 12853075 }, { month: 'T3', '2019': 7099906, '2020': 7689167, '2021': 8225013, '2022': 9118385, '2023': 11338618, '2024': 13369532, '2025': 12890850 }, { month: 'T4', '2019': 7226879, '2020': 7776205, '2021': 8351495, '2022': 9250595, '2023': 11579583, '2024': 13448178, '2025': 12891307 }, { month: 'T5', '2019': 7360231, '2020': 7886803, '2021': 8454162, '2022': 9369084, '2023': 11863649, '2024': 13520053, '2025': 12896999 }, { month: 'T6', '2019': 7387886, '2020': 7984621, '2021': 8526944, '2022': 9421921, '2023': 12102284, '2024': 13503888, '2025': 12922805 }, { month: 'T7', '2019': 7501322, '2020': 8023911, '2021': 8561357, '2022': 9545077, '2023': 12396950, '2024': 13437975, '2025': 13018945 }, { month: 'T8', '2019': 7478547, '2020': 8080134, '2021': 8596593, '2022': 9748059, '2023': 12729801, '2024': 13374142, '2025': null }, { month: 'T9', '2019': 7400006, '2020': 7826060, '2021': 8643065, '2022': 10038627, '2023': 12761543, '2024': 13183660, '2025': null }, { month: 'T10', '2019': 7526078, '2020': 7951728, '2021': 8775017, '2022': 10357187, '2023': 13084047, '2024': 13108481, '2025': null }, { month: 'T11', '2019': 7645699, '2020': 8056348, '2021': 8980661, '2022': 10690852, '2023': 13260731, '2024': 13096134, '2025': null }, { month: 'T12', '2019': 7697211, '2020': 8121817, '2021': 9174756, '2022': 10933394, '2023': 13353210, '2024': 12968113, '2025': null } ],
+        historicalDataTermAccounts: [ { month: 'T1', '2019': 1780277, '2020': 1954657, '2021': 1954313, '2022': 2082526, '2023': 2299660, '2024': 2679499, '2025': 2900595 }, { month: 'T2', '2019': 1871776, '2020': 2010474, '2021': 2041113, '2022': 2109704, '2023': 2387542, '2024': 2800147, '2025': 2951486 }, { month: 'T3', '2019': 1872320, '2020': 2004133, '2021': 2023120, '2022': 2080545, '2023': 2461112, '2024': 2826446, '2025': 2951086 }, { month: 'T4', '2019': 1877362, '2020': 2033828, '2021': 2014127, '2022': 2067199, '2023': 2528902, '2024': 2841038, '2025': 2948430 }, { month: 'T5', '2019': 1876773, '2020': 2040004, '2021': 2030938, '2022': 2057734, '2023': 2554421, '2024': 2849494, '2025': 2941712 }, { month: 'T6', '2019': 1886906, '2020': 2036451, '2021': 2044778, '2022': 2063146, '2023': 2570043, '2024': 2838768, '2025': 2974397 }, { month: 'T7', '2019': 1887505, '2020': 2031273, '2021': 2044778, '2022': 2063934, '2023': 2577039, '2024': 2840093, '2025': 2964763 }, { month: 'T8', '2019': 1899340, '2020': 2047260, '2021': 2068210, '2022': 2067214, '2023': 2591638, '2024': 2859909, '2025': null }, { month: 'T9', '2019': 1902559, '2020': 2035388, '2021': 2095201, '2022': 2060410, '2023': 2633526, '2024': 2855981, '2025': null }, { month: 'T10', '2019': 1899811, '2020': 2023737, '2021': 2096252, '2022': 2096434, '2023': 2644034, '2024': 2850641, '2025': null }, { month: 'T11', '2019': 1901116, '2020': 2008538, '2021': 2073260, '2022': 2121571, '2023': 2661759, '2024': 2836407, '2025': null }, { month: 'T12', '2019': 1890479, '2020': 1974418, '2021': 2044338, '2022': 2147266, '2023': 2692063, '2024': 2822212, '2025': null } ],
+        historicalDataLoanAccounts: [ { month: 'T1', '2019': 1001233, '2020': 1058279, '2021': 1105269, '2022': 1210686, '2023': 1073551, '2024': 1180207, '2025': 1227738 }, { month: 'T2', '2019': 986878, '2020': 1050271, '2021': 1088461, '2022': 1199671, '2023': 1070331, '2024': 1167676, '2025': 1219540 }, { month: 'T3', '2019': 1000429, '2020': 1055682, '2021': 1097328, '2022': 1212014, '2023': 1079306, '2024': 1179775, '2025': 1226003 }, { month: 'T4', '2019': 1006932, '2020': 1053826, '2021': 1099033, '2022': 1215717, '2023': 1077539, '2024': 1183609, '2025': 1229745 }, { month: 'T5', '2019': 1012102, '2020': 1058682, '2021': 1098245, '2022': 1217527, '2023': 1077097, '2024': 1190573, '2025': 1231959 }, { month: 'T6', '2019': 1021677, '2020': 1072318, '2021': 1109970, '2022': 1226044, '2023': 1085003, '2024': 1200381, '2025': 1236980 }, { month: 'T7', '2019': 1026948, '2020': 1084071, '2021': 1106771, '2022': 1230774, '2023': 1078342, '2024': 1206007, '2025': 1227917 }, { month: 'T8', '2019': 1035135, '2020': 1089639, '2021': 1125472, '2022': 1240815, '2023': 1066624, '2024': 1215482, '2025': null }, { month: 'T9', '2019': 1043495, '2020': 1089639, '2021': 1154587, '2022': 1092624, '2023': 1204830, '2024': 1221606, '2025': null }, { month: 'T10', '2019': 1049832, '2020': 1092147, '2021': 1182989, '2022': 1074325, '2023': 1184972, '2024': 1228094, '2025': null }, { month: 'T11', '2019': 1059196, '2020': 1099512, '2021': 1207721, '2022': 1083114, '2023': 1181735, '2024': 1234567, '2025': null }, { month: 'T12', '2019': 1070760, '2020': 1112158, '2021': 1208173, '2022': 1089756, '2023': 1190250, '2024': 1243395, '2025': null } ],
+        avgDailyTransactionOverviewData: [ { name: 'T10/24', NgayThuong: 11916844, CuoiTuan: 10230944, ChungCaThang: 11579583 }, { name: 'T11/24', NgayThuong: 12200000, CuoiTuan: 10700000, ChungCaThang: 11700000 }, { name: 'T12/24', NgayThuong: 12600000, CuoiTuan: 10600000, ChungCaThang: 11800000 }, { name: 'T1/25', NgayThuong: 14381208, CuoiTuan: 10017960, ChungCaThang: 12410709 }, { name: 'T2/25', NgayThuong: 10688239, CuoiTuan: 8164601, ChungCaThang: 9967199 }, { name: 'T3/25', NgayThuong: 12585981, CuoiTuan: 10575212, ChungCaThang: 11937346 }, { name: 'T4/25', NgayThuong: 13200000, CuoiTuan: 11400000, ChungCaThang: 12800000 }, { name: 'T5/25', NgayThuong: 13465361, CuoiTuan: 11916844, ChungCaThang: 12981449 }, { name: 'T6/25', NgayThuong: 13899864, CuoiTuan: 11971485, ChungCaThang: 13321350 }, { name: 'T7/25', NgayThuong: 13300000, CuoiTuan: 11730000, ChungCaThang: 12870000 }]
     };
     const historicalDataYears = ['2019', '2020', '2021', '2022', '2023', '2024', '2025'];
-    const totalHistoricalDataTransactions = [ { month: 'T1', '2019': null, '2020': 70398653, '2021': 102638103, '2022': 130703966, '2023': 181356164, '2024': 286287309, '2025': 384731977 }, { month: 'T2', '2019': 36279421, '2020': 57879463, '2021': 89245849, '2022': 83360056, '2023': 158938838, '2024': 236921056, '2025': 279081583 }, { month: 'T3', '2019': 51820298, '2020': 68676065, '2021': 102350186, '2022': 122619991, '2023': 199759104, '2024': 281081993, '2025': 370057722 }, { month: 'T4', '2019': 52226477, '2020': 58819178, '2021': 103837369, '2022': 128137360, '2023': 201192652, '2024': 288032713, '2025': 385146829 }, { month: 'T5', '2019': 55369694, '2020': 68579336, '2021': 103046250, '2022': 130494810, '2023': 206797842, '2024': 308745155, '2025': 403585961 }, { month: 'T6', '2019': 56695303, '2020': 73334371, '2021': 103126615, '2022': 133375455, '2023': 204752945, '2024': 295939971, '2025': 399640500 }, { month: 'T7', '2019': 57697356, '2020': 84454355, '2021': 102540561, '2022': 138090542, '2023': 214731121, '2024': 298608364, '2025': null }, { month: 'T8', '2019': 58799243, '2020': 77298869, '2021': 96668079, '2022': 148734220, '2023': 240964790, '2024': 324080355, '2025': null }, { month: 'T9', '2019': 61182154, '2020': 85248817, '2021': 104123078, '2022': 153754867, '2023': 211926840, '2024': 318656429, '2025': null }, { month: 'T10', '2019': 67396522, '2020': 86593211, '2021': 119182757, '2022': 167486378, '2023': 254211060, '2024': 355536341, '2025': null }, { month: 'T11', '2019': 64845235, '2020': 88003871, '2021': 123256901, '2022': 172958138, '2023': 256737976, '2024': 352507647, '2025': null }, { month: 'T12', '2019': 82155719, '2020': 106484240, '2021': 140437165, '2022': 193265178, '2023': 280907282, '2024': 373647363, '2025': null } ];
-    const historicalDataCustomers = [ { month: 'T1', '2019': 9656487, '2020': 10786031, '2021': 12030916, '2022': 13848173, '2023': 15952993, '2024': 19355122, '2025': 22044666 }, { month: 'T2', '2019': 9721375, '2020': 10896651, '2021': 12091951, '2022': 13951141, '2023': 16122033, '2024': 19497444, '2025': 22208411 }, { month: 'T3', '2019': 9867924, '2020': 11021568, '2021': 12245414, '2022': 13836463, '2023': 16394484, '2024': 19716610, '2025': 22400157 }, { month: 'T4', '2019': 9995512, '2020': 11102005, '2021': 12428870, '2022': 14031236, '2023': 16699062, '2024': 19936667, '2025': 22571454 }, { month: 'T5', '2019': 10122903, '2020': 11215459, '2021': 12594700, '2022': 14230788, '2023': 17005047, '2024': 20247475, '2025': 22759026 }, { month: 'T6', '2019': 10230944, '2020': 11348598, '2021': 12732373, '2022': 14411889, '2023': 17396120, '2024': 20477446, '2025': 22964050 }, { month: 'T7', '2019': 10360057, '2020': 11487241, '2021': 12836365, '2022': 14564994, '2023': 17767003, '2024': 20717127, '2025': null }, { month: 'T8', '2019': 10499226, '2020': 11603118, '2021': 12927206, '2022': 14765195, '2023': 18126071, '2024': 21005215, '2025': null }, { month: 'T9', '2019': 10338024, '2020': 11480809, '2021': 13048090, '2022': 15035510, '2023': 18405803, '2024': 21298283, '2025': null }, { month: 'T10', '2019': 10492757, '2020': 11642540, '2021': 13273258, '2022': 15319916, '2023': 18734816, '2024': 21536440, '2025': null }, { month: 'T11', '2019': 10606801, '2020': 11802198, '2021': 13538154, '2022': 15628798, '2023': 18979659, '2024': 21760624, '2025': null }, { month: 'T12', '2019': 10721178, '2020': 11935334, '2021': 13751551, '2022': 15847618, '2023': 19174616, '2024': 21915101, '2025': null } ];
-    const historicalDataDemandAccounts = [ { month: 'T1', '2019': 7183048, '2020': 7649190, '2021': 8164174, '2022': 8974079, '2023': 11023252, '2024': 13359499, '2025': 12856906 }, { month: 'T2', '2019': 7157943, '2020': 7740033, '2021': 8143253, '2022': 9018363, '2023': 11160506, '2024': 13376152, '2025': 12853075 }, { month: 'T3', '2019': 7099906, '2020': 7689167, '2021': 8225013, '2022': 9118385, '2023': 11338618, '2024': 13369532, '2025': 12890850 }, { month: 'T4', '2019': 7226879, '2020': 7776205, '2021': 8351495, '2022': 9250595, '2023': 11579583, '2024': 13448178, '2025': 12891307 }, { month: 'T5', '2019': 7360231, '2020': 7886803, '2021': 8454162, '2022': 9369084, '2023': 11863649, '2024': 13520053, '2025': 12896999 }, { month: 'T6', '2019': 7387886, '2020': 7984621, '2021': 8526944, '2022': 9421921, '2023': 12102284, '2024': 13503888, '2025': 12922805 }, { month: 'T7', '2019': 7501322, '2020': 8023911, '2021': 8561357, '2022': 9545077, '2023': 12396950, '2024': 13437975, '2025': null }, { month: 'T8', '2019': 7478547, '2020': 8080134, '2021': 8596593, '2022': 9748059, '2023': 12729801, '2024': 13374142, '2025': null }, { month: 'T9', '2019': 7400006, '2020': 7826060, '2021': 8643065, '2022': 10038627, '2023': 12761543, '2024': 13183660, '2025': null }, { month: 'T10', '2019': 7526078, '2020': 7951728, '2021': 8775017, '2022': 10357187, '2023': 13084047, '2024': 13108481, '2025': null }, { month: 'T11', '2019': 7645699, '2020': 8056348, '2021': 8980661, '2022': 10690852, '2023': 13260731, '2024': 13096134, '2025': null }, { month: 'T12', '2019': 7697211, '2020': 8121817, '2021': 9174756, '2022': 10933394, '2023': 13353210, '2024': 12968113, '2025': null } ];
-    const historicalDataTermAccounts = [ { month: 'T1', '2019': 1780277, '2020': 1954657, '2021': 1954313, '2022': 2082526, '2023': 2299660, '2024': 2679499, '2025': 2900595 }, { month: 'T2', '2019': 1871776, '2020': 2010474, '2021': 2041113, '2022': 2109704, '2023': 2387542, '2024': 2800147, '2025': 2951486 }, { month: 'T3', '2019': 1872320, '2020': 2004133, '2021': 2023120, '2022': 2080545, '2023': 2461112, '2024': 2826446, '2025': 2951086 }, { month: 'T4', '2019': 1877362, '2020': 2033828, '2021': 2014127, '2022': 2067199, '2023': 2528902, '2024': 2841038, '2025': 2948430 }, { month: 'T5', '2019': 1876773, '2020': 2040004, '2021': 2030938, '2022': 2057734, '2023': 2554421, '2024': 2849494, '2025': 2941712 }, { month: 'T6', '2019': 1886906, '2020': 2036451, '2021': 2044778, '2022': 2063146, '2023': 2570043, '2024': 2838768, '2025': 2974397 }, { month: 'T7', '2019': 1887505, '2020': 2031273, '2021': 2044778, '2022': 2063934, '2023': 2577039, '2024': 2840093, '2025': null }, { month: 'T8', '2019': 1899340, '2020': 2047260, '2021': 2068210, '2022': 2067214, '2023': 2591638, '2024': 2859909, '2025': null }, { month: 'T9', '2019': 1902559, '2020': 2035388, '2021': 2095201, '2022': 2060410, '2023': 2633526, '2024': 2855981, '2025': null }, { month: 'T10', '2019': 1899811, '2020': 2023737, '2021': 2096252, '2022': 2096434, '2023': 2644034, '2024': 2850641, '2025': null }, { month: 'T11', '2019': 1901116, '2020': 2008538, '2021': 2073260, '2022': 2121571, '2023': 2661759, '2024': 2836407, '2025': null }, { month: 'T12', '2019': 1890479, '2020': 1974418, '2021': 2044338, '2022': 2147266, '2023': 2692063, '2024': 2822212, '2025': null } ];
-    const historicalDataLoanAccounts = [ { month: 'T1', '2019': 1001233, '2020': 1058279, '2021': 1105269, '2022': 1210686, '2023': 1073551, '2024': 1180207, '2025': 1227738 }, { month: 'T2', '2019': 986878, '2020': 1050271, '2021': 1088461, '2022': 1199671, '2023': 1070331, '2024': 1167676, '2025': 1219540 }, { month: 'T3', '2019': 1000429, '2020': 1055682, '2021': 1097328, '2022': 1212014, '2023': 1079306, '2024': 1179775, '2025': 1226003 }, { month: 'T4', '2019': 1006932, '2020': 1053826, '2021': 1099033, '2022': 1215717, '2023': 1077539, '2024': 1183609, '2025': 1229745 }, { month: 'T5', '2019': 1012102, '2020': 1058682, '2021': 1098245, '2022': 1217527, '2023': 1077097, '2024': 1190573, '2025': 1231959 }, { month: 'T6', '2019': 1021677, '2020': 1072318, '2021': 1109970, '2022': 1226044, '2023': 1085003, '2024': 1200381, '2025': 1236980 }, { month: 'T7', '2019': 1026948, '2020': 1084071, '2021': 1106771, '2022': 1230774, '2023': 1078342, '2024': 1206007, '2025': null }, { month: 'T8', '2019': 1035135, '2020': 1089639, '2021': 1125472, '2022': 1240815, '2023': 1066624, '2024': 1215482, '2025': null }, { month: 'T9', '2019': 1043495, '2020': 1089639, '2021': 1154587, '2022': 1092624, '2023': 1204830, '2024': 1221606, '2025': null }, { month: 'T10', '2019': 1049832, '2020': 1092147, '2021': 1182989, '2022': 1074325, '2023': 1184972, '2024': 1228094, '2025': null }, { month: 'T11', '2019': 1059196, '2020': 1099512, '2021': 1207721, '2022': 1083114, '2023': 1181735, '2024': 1234567, '2025': null }, { month: 'T12', '2019': 1070760, '2020': 1112158, '2021': 1208173, '2022': 1089756, '2023': 1190250, '2024': 1243395, '2025': null } ];
-    const avgDailyTransactionOverviewData = [ { name: 'T10/24', NgayThuong: 11916844, CuoiTuan: 10230944, ChungCaThang: 11579583 }, { name: 'T11/24', NgayThuong: 12200000, CuoiTuan: 10700000, ChungCaThang: 11700000 }, { name: 'T12/24', NgayThuong: 12600000, CuoiTuan: 10600000, ChungCaThang: 11800000 }, { name: 'T1/25', NgayThuong: 14381208, CuoiTuan: 10017960, ChungCaThang: 12410709 }, { name: 'T2/25', NgayThuong: 10688239, CuoiTuan: 8164601, ChungCaThang: 9967199 }, { name: 'T3/25', NgayThuong: 12585981, CuoiTuan: 10575212, ChungCaThang: 11937346 }, { name: 'T4/25', NgayThuong: 13200000, CuoiTuan: 11400000, ChungCaThang: 12800000 }, { name: 'T5/25', NgayThuong: 13465361, CuoiTuan: 11916844, ChungCaThang: 12981449 }, { name: 'T6/25', NgayThuong: 13899864, CuoiTuan: 11971485, ChungCaThang: 13321350 }, ];
-
-    const getLatestMonth = (reports) => {
-        const monthKeys = Object.keys(reports);
-        if (monthKeys.length === 0) return '';
-        monthKeys.sort((a, b) => {
-            const [monthA, yearA] = a.split('/').map(Number);
-            const [monthB, yearB] = b.split('/').map(Number);
-            if (yearA !== yearB) return yearB - yearA;
-            return monthB - monthA;
-        });
-        return monthKeys[0];
-    };
-
+    
     const [filterOpen, setFilterOpen] = useState(false);
     const [selectedYears, setSelectedYears] = useState(() => historicalDataYears.slice(-3));
     const [reports, setReports] = useState(initialReportData);
     const [currentMonth, setCurrentMonth] = useState(() => getLatestMonth(initialReportData));
-    const [isExporting, setIsExporting] = useState(false);
     const [maximizedChart, setMaximizedChart] = useState(null);
 
     const handleYearChange = (yearToToggle) => {
@@ -506,7 +670,7 @@ const App = () => {
 
                             const newMonthKey = window.prompt("Phân tích thành công! Vui lòng nhập tháng/năm cho báo cáo này (ví dụ: 03/2025):");
                             if (newMonthKey && /^\d{2}\/\d{4}$/.test(newMonthKey)) {
-                                setReports(prev => ({ ...prev, [newMonthKey]: newReportData }));
+                                setReports(prev => ({ ...prev, [newMonthKey]: {...newReportData, month: newMonthKey} }));
                                 setCurrentMonth(newMonthKey);
                                 alert(`Đã thêm báo cáo cho tháng ${newMonthKey}!`);
                             } else if (newMonthKey) {
@@ -582,94 +746,30 @@ const App = () => {
         URL.revokeObjectURL(url);
     };
 
-    const handleExportPdf = useCallback(() => {
-        const element = document.getElementById('dashboard-content');
-        if (element && typeof window.html2pdf !== 'undefined') {
-            setIsExporting(true);
-            
-            const style = document.createElement('style');
-            style.id = 'pdf-export-styles';
-            style.innerHTML = `
-                .pdf-export-mode {
-                    background: #ffffff !important;
-                }
-                .pdf-export-mode * {
-                    color: #1f2937 !important; /* text-gray-800 */
-                    transition: none !important;
-                    animation: none !important;
-                    opacity: 1 !important;
-                    transform: none !important;
-                }
-                .pdf-export-mode .firefly-container, .pdf-export-mode .card-pattern {
-                    display: none !important;
-                }
-                .pdf-export-mode .bg-white\\/5, .pdf-export-mode .bg-white\\/10 {
-                    background-color: #f9fafb !important; /* bg-gray-50 */
-                    border: 1px solid #e5e7eb !important;
-                }
-                .pdf-export-mode .backdrop-blur-md { backdrop-filter: none !important; }
-                .pdf-export-mode .text-white { color: #1f2937 !important; }
-                .pdf-export-mode .text-gray-300 { color: #4b5563 !important; }
-                .pdf-export-mode .text-gray-400 { color: #6b7280 !important; }
-                .pdf-export-mode .border-white\\/10 { border-color: #e5e7eb !important; }
-                
-                .pdf-export-mode .text-green-400 { color: #16a34a !important; }
-                .pdf-export-mode .text-red-400 { color: #dc2626 !important; }
-                .pdf-export-mode .text-blue-500 { color: #2563eb !important; }
-                .pdf-export-mode .text-indigo-400 { color: #4f46e5 !important; }
-                .pdf-export-mode .text-teal-400 { color: #0d9488 !important; }
-                .pdf-export-mode .text-orange-400 { color: #ea580c !important; }
-                .pdf-export-mode .text-pink-400 { color: #db2777 !important; }
-                .pdf-export-mode .text-lime-400 { color: #65a30d !important; }
-                .pdf-export-mode .text-blue-400 { color: #3b82f6 !important; }
-                .pdf-export-mode .text-yellow-400 { color: #ca8a04 !important; }
-
-                /* Fix for "Công việc tiếp theo" section */
-                .pdf-export-mode .bg-gradient-to-r { background: #eff6ff !important; } /* light blue bg */
-                .pdf-export-mode .bg-\\[\\#1a2c28\\] { background: #dbeafe !important; } /* lighter blue bg */
-                .pdf-export-mode .bg-gradient-to-r .text-white { color: #1e3a8a !important; } /* dark blue text */
-
-                .pdf-export-mode .recharts-text, .pdf-export-mode .recharts-cartesian-axis-tick-value tspan {
-                    fill: #1f2937 !important;
-                }
-                .pdf-export-mode .page-break-avoider {
-                    page-break-inside: avoid !important;
-                }
-                .pdf-export-mode .section-title-wrapper {
-                     page-break-inside: avoid !important;
-                }
-            `;
-            document.head.appendChild(style);
-            element.classList.add('pdf-export-mode');
-
-            const opt = {
-                margin: [10, 5, 10, 5],
-                filename: `bao_cao_core_banking_${currentMonth.replace('/', '_')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2, 
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    // Fix for rendering lucide-react icons (SVGs)
-                    svgRendering: true, 
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'] }
-            };
-
-            window.html2pdf().from(element).set(opt).save().finally(() => {
-                setIsExporting(false);
-                const styleTag = document.getElementById('pdf-export-styles');
-                if (styleTag) {
-                    document.head.removeChild(styleTag);
-                }
-                element.classList.remove('pdf-export-mode');
-            });
-
-        } else {
-            alert('Thư viện xuất PDF chưa sẵn sàng. Vui lòng thử lại sau.');
+    const handleConfirmAndExport = (element) => {
+        if (!element || typeof window.html2pdf === 'undefined') {
+            alert('Không thể xuất PDF. Thư viện chưa sẵn sàng hoặc không tìm thấy nội dung.');
+            return;
         }
-    }, [currentMonth]);
+        setIsExporting(true);
+        setShowPrintPreview(false);
+
+        const opt = {
+            margin: [10, 5, 10, 5],
+            filename: `bao_cao_core_banking_${currentMonth.replace('/', '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, svgRendering: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
+        };
+
+        window.html2pdf().from(element).set(opt).save().catch(err => {
+            console.error("Lỗi khi xuất PDF:", err);
+            alert("Đã xảy ra lỗi trong quá trình tạo file PDF. Vui lòng xem console để biết thêm chi tiết.");
+        }).finally(() => {
+            setIsExporting(false);
+        });
+    };
 
     const calculateTrend = (currentValue, previousValue) => {
         const parseValue = (val) => {
@@ -763,7 +863,6 @@ const App = () => {
                     box-shadow: 0 0 0vw 0vw #FFD700;
                     animation: drift ease alternate infinite, flash ease infinite;
                 }
-
                 @keyframes drift {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
@@ -776,46 +875,32 @@ const App = () => {
                 
                 .firefly:nth-child(1) { animation-name: move1; animation-duration: 10s; }
                 .firefly:nth-child(1)::after { animation-duration: 10s, 6000ms; animation-delay: 0ms, 3000ms; }
-                
                 .firefly:nth-child(2) { animation-name: move2; animation-duration: 12s; }
                 .firefly:nth-child(2)::after { animation-duration: 12s, 5000ms; animation-delay: 0ms, 2000ms; }
-
                 .firefly:nth-child(3) { animation-name: move3; animation-duration: 15s; }
                 .firefly:nth-child(3)::after { animation-duration: 15s, 7000ms; animation-delay: 0ms, 4000ms; }
-                
                 .firefly:nth-child(4) { animation-name: move4; animation-duration: 11s; }
                 .firefly:nth-child(4)::after { animation-duration: 11s, 5500ms; animation-delay: 0ms, 1000ms; }
-
                 .firefly:nth-child(5) { animation-name: move5; animation-duration: 14s; }
                 .firefly:nth-child(5)::after { animation-duration: 14s, 6500ms; animation-delay: 0ms, 5000ms; }
-
                 .firefly:nth-child(6) { animation-name: move6; animation-duration: 16s; }
                 .firefly:nth-child(6)::after { animation-duration: 16s, 8000ms; animation-delay: 0ms, 6000ms; }
-
                 .firefly:nth-child(7) { animation-name: move7; animation-duration: 13s; }
                 .firefly:nth-child(7)::after { animation-duration: 13s, 4000ms; animation-delay: 0ms, 2500ms; }
-
                 .firefly:nth-child(8) { animation-name: move8; animation-duration: 17s; }
                 .firefly:nth-child(8)::after { animation-duration: 17s, 9000ms; animation-delay: 0ms, 7000ms; }
-
                 .firefly:nth-child(9) { animation-name: move9; animation-duration: 10s; }
                 .firefly:nth-child(9)::after { animation-duration: 10s, 5200ms; animation-delay: 0ms, 1500ms; }
-
                 .firefly:nth-child(10) { animation-name: move10; animation-duration: 12s; }
                 .firefly:nth-child(10)::after { animation-duration: 12s, 6800ms; animation-delay: 0ms, 3500ms; }
-                
                 .firefly:nth-child(11) { animation-name: move11; animation-duration: 15s; }
                 .firefly:nth-child(11)::after { animation-duration: 15s, 7200ms; animation-delay: 0ms, 5500ms; }
-
                 .firefly:nth-child(12) { animation-name: move12; animation-duration: 11s; }
                 .firefly:nth-child(12)::after { animation-duration: 11s, 4500ms; animation-delay: 0ms, 800ms; }
-
                 .firefly:nth-child(13) { animation-name: move13; animation-duration: 14s; }
                 .firefly:nth-child(13)::after { animation-duration: 14s, 6300ms; animation-delay: 0ms, 4800ms; }
-
                 .firefly:nth-child(14) { animation-name: move14; animation-duration: 16s; }
                 .firefly:nth-child(14)::after { animation-duration: 16s, 8500ms; animation-delay: 0ms, 6500ms; }
-
                 .firefly:nth-child(15) { animation-name: move15; animation-duration: 13s; }
                 .firefly:nth-child(15)::after { animation-duration: 13s, 5800ms; animation-delay: 0ms, 2800ms; }
 
@@ -836,10 +921,10 @@ const App = () => {
                 @keyframes move15 { 0% { transform: translateX(15vw) translateY(45vh) scale(0.9); } 100% { transform: translateX(-25vw) translateY(-5vh) scale(0.6); } }
             `} </style>
             <FireflyBackground />
-            {isExporting && (
+             {isExporting && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-[200]">
                     <Loader className="text-yellow-400 animate-spin" size={64} />
-                    <p className="text-xl mt-4 text-white">Đang xuất báo cáo PDF...</p>
+                    <p className="text-xl mt-4 text-white">Đang xuất file PDF...</p>
                 </div>
             )}
             <div className="relative z-10">{children}</div>
@@ -867,6 +952,17 @@ const App = () => {
 
     return (
         <MainContainer>
+             {showPrintPreview && (
+                <PrintPreviewModal 
+                    onConfirm={handleConfirmAndExport}
+                    onCancel={() => setShowPrintPreview(false)}
+                    reportData={currentReport}
+                    historicalData={historicalData}
+                    selectedYears={selectedYears}
+                    lineColors={lineColors}
+                />
+            )}
+
             <header className="sticky top-0 z-50 bg-black/20 backdrop-blur-lg border-b border-white/10 p-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4"><BidvLogo className="h-10" /><h1 className="text-2xl sm:text-3xl font-extrabold hidden md:block" style={{ background: 'linear-gradient(to right, #C0B283, #FFD700, #DAA520, #B8860B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.5))' }}>Core Banking Operations Report</h1></div>
@@ -884,7 +980,7 @@ const App = () => {
                             {cooldown > 0 ? (<span className="flex items-center text-xs w-12 justify-center"><Loader className="animate-spin h-4 w-4 mr-1" />{`${cooldown}s`}</span>) : (<Upload size={20} />)}
                             <input id="import-file" type="file" accept=".txt,.pdf,.md,.doc,.docx" onChange={handleFileAnalysis} className="hidden" disabled={cooldown > 0} />
                         </label>
-                        <button onClick={handleExportPdf} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"><Download size={20} /></button>
+                        <button onClick={() => setShowPrintPreview(true)} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"><Download size={20} /></button>
                     </div>
                 </div>
             </header>
@@ -892,16 +988,16 @@ const App = () => {
                 <div className="text-center mb-12 page-break-avoider"><AnimatedComponent><h2 className="text-4xl font-bold text-white">Báo cáo hoạt động Core Banking</h2><p className="text-xl text-yellow-400 mt-2">{`Tháng ${currentMonth}`}</p></AnimatedComponent></div>
                 <section className="mb-16 page-break-avoider"><div className="section-title flex items-center gap-4 mb-8"><BarChart2 size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Hiệu suất & Độ ổn định</h3></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><KpiCard title={kpiData.totalFinancialTransactions.description} value={kpiData.totalFinancialTransactions.value} icon={Activity} valueColor="text-green-400" trendValue={kpiTrends.totalFinancialTransactions} yearOverYearGrowth={kpiData.totalFinancialTransactions.yearOverYear} yoyLabel="so với cùng kỳ năm 2024" /><KpiCard title={kpiData.peakDayTransactions.description} value={kpiData.peakDayTransactions.value} icon={TrendingUp} valueColor="text-green-400" description={`Ngày: ${kpiData.peakDayTransactions.date}`} trendValue={kpiTrends.peakDayTransactions} /><KpiCard title={kpiData.peakTPS.description} value={kpiData.peakTPS.value} icon={Activity} valueColor="text-orange-400" description={`Ngày: ${kpiData.peakTPS.date}`} trendValue={kpiTrends.peakTPS} /><KpiCard title={kpiData.avgDayEndDuration.description} value={kpiData.avgDayEndDuration.value} icon={Clock} valueColor="text-indigo-400" trendValue={kpiTrends.avgDayEndDuration} trendDirection="down" /><KpiCard title={kpiData.avgResponseTime.description} value={kpiData.avgResponseTime.value} icon={Activity} valueColor="text-teal-400" trendValue={kpiTrends.avgResponseTime} trendDirection="down" /><KpiCard title={kpiData.avgCPUUtilization.description} value={kpiData.avgCPUUtilization.value} icon={Cpu} valueColor="text-blue-400" trendValue={kpiTrends.avgCPUUtilization} trendDirection="down" /></div></section>
                 <section className="mb-16 grid grid-cols-1 lg:grid-cols-5 gap-6 page-break-avoider">
-                    <div className="lg:col-span-2"><ChartCard title={`Tỷ trọng giao dịch theo kênh`}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={processedTransactionByChannelData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={80} outerRadius={120} fill="#8884d8" paddingAngle={2} stroke="none">{processedTransactionByChannelData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}</Pie><Tooltip content={<CustomTooltip unit="%" />} /><Legend iconType="circle" wrapperStyle={{fontSize: "12px", color: "#d1d5db"}}/></PieChart></ResponsiveContainer></ChartCard></div>
-                    <div className="lg:col-span-3"><ChartCard title="Số lượng giao dịch trung bình theo ngày"><ResponsiveContainer width="100%" height="100%"><AreaChart data={avgDailyTransactionOverviewData} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis stroke="rgba(255, 255, 255, 0.5)" tickFormatter={(value) => `${(value / 1000000)}M`} tick={{ fontSize: 12 }} /><Tooltip content={<CustomTooltip valueFormatter={val => val.toLocaleString()}/>} /><Legend wrapperStyle={{color: "#d1d5db"}} /><defs><linearGradient id="colorNgayThuong" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/><stop offset="95%" stopColor="#8884d8" stopOpacity={0}/></linearGradient><linearGradient id="colorCuoiTuan" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/><stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/></linearGradient></defs><Area type="monotone" dataKey="NgayThuong" name="Ngày thường" stackId="1" stroke="#8884d8" fill="url(#colorNgayThuong)" /><Area type="monotone" dataKey="CuoiTuan" name="Cuối tuần" stackId="1" stroke="#82ca9d" fill="url(#colorCuoiTuan)" /></AreaChart></ResponsiveContainer></ChartCard></div>
+                    <div className="lg:col-span-2"><ChartCard title={`Tỷ trọng giao dịch theo kênh`}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={processedTransactionByChannelData} isAnimationActive={true} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={80} outerRadius={120} fill="#8884d8" paddingAngle={2} stroke="none">{processedTransactionByChannelData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}</Pie><Tooltip content={<CustomTooltip unit="%" />} /><Legend iconType="circle" wrapperStyle={{fontSize: "12px", color: "#d1d5db"}}/></PieChart></ResponsiveContainer></ChartCard></div>
+                    <div className="lg:col-span-3"><ChartCard title="Số lượng giao dịch trung bình theo ngày"><ResponsiveContainer width="100%" height="100%"><AreaChart data={historicalData.avgDailyTransactionOverviewData} isAnimationActive={true} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" /><XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis stroke="rgba(255, 255, 255, 0.5)" tickFormatter={(value) => `${(value / 1000000)}M`} tick={{ fontSize: 12 }} /><Tooltip content={<CustomTooltip valueFormatter={val => val.toLocaleString()}/>} /><Legend wrapperStyle={{color: "#d1d5db"}} /><defs><linearGradient id="colorNgayThuong" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/><stop offset="95%" stopColor="#8884d8" stopOpacity={0}/></linearGradient><linearGradient id="colorCuoiTuan" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/><stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/></linearGradient></defs><Area type="monotone" dataKey="NgayThuong" name="Ngày thường" stackId="1" stroke="#8884d8" fill="url(#colorNgayThuong)" /><Area type="monotone" dataKey="CuoiTuan" name="Cuối tuần" stackId="1" stroke="#82ca9d" fill="url(#colorCuoiTuan)" /></AreaChart></ResponsiveContainer></ChartCard></div>
                 </section>
                 <section className="mb-16 page-break-avoider">
                     <div className="section-title-wrapper">
                         <div className="section-title flex items-center gap-4 mb-8"><Users size={32} className="text-yellow-400" /><h3 className="text-3xl font-semibold">Tăng trưởng Khách hàng & Tài khoản</h3></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 page-break-avoider">{growthMetrics.map((metric, index) => (<GrowthMetricCard key={index} icon={metric.icon} color={metric.color} absoluteValue={metric.absoluteValue} percentageValue={metric.percentageValue} name={metric.name} description={metric.description} />))}</div>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><ChartCard title="Xu hướng số lượng giao dịch tài chính"><ResponsiveContainer width="100%" height="100%"><LineChart data={totalHistoricalDataTransactions} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Xu hướng số lượng khách hàng"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataCustomers} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><ChartCard title="Tài khoản tiền gửi không kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataDemandAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền gửi có kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataTermAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền vay"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalDataLoanAccounts} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><ChartCard title="Xu hướng số lượng giao dịch tài chính"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalData.totalHistoricalDataTransactions} isAnimationActive={true} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Xu hướng số lượng khách hàng"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalData.historicalDataCustomers} isAnimationActive={true} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><ChartCard title="Tài khoản tiền gửi không kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalData.historicalDataDemandAccounts} isAnimationActive={true} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền gửi có kỳ hạn"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalData.historicalDataTermAccounts} isAnimationActive={true} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard><ChartCard title="Tài khoản tiền vay"><ResponsiveContainer width="100%" height="100%"><LineChart data={historicalData.historicalDataLoanAccounts} isAnimationActive={true} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}><CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)"/><XAxis dataKey="month" stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} stroke="rgba(255, 255, 255, 0.5)" tick={{ fontSize: 12 }}/><Tooltip content={<CustomTooltip valueFormatter={val => `${(val/1000000).toFixed(1)}M`} />} /><Legend wrapperStyle={{color: "#d1d5db"}} />{selectedYears.map((year, index) => (<Line key={year} type="monotone" dataKey={year} stroke={lineColors[index % lineColors.length]} name={year} dot={false} strokeWidth={2} />))}</LineChart></ResponsiveContainer></ChartCard></div>
                 </section>
                 <section className="mb-16 page-break-avoider"><div className="section-title flex items-center gap-4 mb-8"><AlertTriangle size={32} className="text-yellow-400" /><h3 className="text-3xl font-bold">Tình hình khắc phục lỗi</h3></div>
                     <AnimatedComponent className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-2xl shadow-2xl overflow-hidden"><div className="relative z-10"><div className="flex items-start gap-4 pb-4"><CheckCircle className="text-green-400 mt-1 flex-shrink-0" size={24} /><div><h4 className="font-bold text-lg text-white">Trạng thái tổng quan</h4><p className="text-gray-300">{errorDetails.status}</p></div></div>{errorDetails.webCSRError && errorDetails.webCSRError.description && (<div className="border-t border-white/10 pt-4 mt-4"><h4 className="font-bold text-lg mb-2 text-white">Sự cố ghi nhận: {`${errorDetails.webCSRError.description.substring(0, 50)}...`}</h4><p className="text-sm text-gray-400 mb-4">{`Tóm tắt ảnh hưởng: ${errorDetails.webCSRError.impact}`}</p><button onClick={() => setIsErrorDetailExpanded(!isErrorDetailExpanded)} className="flex items-center text-sm font-semibold text-yellow-400 hover:text-yellow-300 transition-colors">{isErrorDetailExpanded ? 'Thu gọn' : 'Xem chi tiết'}<ChevronRight className={`w-4 h-4 ml-1 transition-transform ${isErrorDetailExpanded ? 'rotate-90' : ''}`} /></button>{isErrorDetailExpanded && (<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-black/20 p-4 rounded-lg"><div><strong className="text-gray-400">Ngày/giờ:</strong> {errorDetails.webCSRError.date}</div><div><strong className="text-gray-400">Tác động:</strong> {errorDetails.webCSRError.impact}</div><div className="md:col-span-2"><strong className="text-gray-400">Mô tả:</strong> {errorDetails.webCSRError.description}</div><div className="md:col-span-2"><strong className="text-gray-400">Nguyên nhân:</strong> {errorDetails.webCSRError.cause}</div><div className="md:col-span-2"><strong className="text-gray-400">Xử lý & Phòng ngừa:</strong> {errorDetails.webCSRError.prevention}</div></div>)}</div>)}</div></AnimatedComponent>
